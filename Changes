@@ -3,6 +3,14 @@ ________________________________________________________________________________
 Revision history for Perl extension Win32::UTCFileTime.
 _________________
 
+v1.10 23 Jun 2003
+
+	- Incorporated improvements to the underlying C code from CVSNT code. The
+	  DST season transition dates are now correctly calculated (assuming that
+	  they are not determined by year-specific clues), rather than assuming the
+	  United States' rule applies.
+_________________
+
 v1.00 05 Jun 2003
 
 	- First released version.

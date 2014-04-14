@@ -1,5 +1,5 @@
 
-Win32::UTCFileTime version 1.00
+Win32::UTCFileTime version 1.10
 ===============================
 
 NAME
@@ -10,7 +10,7 @@ SYNOPSIS
 
 	# Override built-in stat()/lstat()/utime() within current package only:
 	use Win32::UTCFileTime;
-	@stats = stat($file) or die "stat() failed: $^E\n";
+	@stats = stat $file or die "stat() failed: $^E\n";
 	$now = time;
 	utime $now, $now, $file;
 

@@ -35,7 +35,7 @@ our @EXPORT_OK = qw(
 our %EXPORT_TAGS = (
 );
 
-our $VERSION = '1.00';
+our $VERSION = '1.10';
 
 # Boolean debug setting.
 our $Debug = 0;
@@ -213,7 +213,7 @@ Win32::UTCFileTime - Get/set UTC file times with stat/utime on Win32
 
 	# Override built-in stat()/lstat()/utime() within current package only:
 	use Win32::UTCFileTime;
-	@stats = stat($file) or die "stat() failed: $^E\n";
+	@stats = stat $file or die "stat() failed: $^E\n";
 	$now = time;
 	utime $now, $now, $file;
 
@@ -267,6 +267,9 @@ DST correction; the advantage of this scheme is that these functions are exact
 inverses. Another, undocumented, function is also used internally by C<stat(2)>
 for the tricky local time to UTC conversion which, "correctly", uses the file
 time being converted to decide whether or not to apply a DST correction. The
+Win32 API also provides a C<GetTimeZoneInformation()> function that can be used
+to determine whether or not the file time being converted is in daylight saving
+time, which forms the basis of the solution provided by this module. The
 standard C library provides C<localtime(3)> for UTC to local time conversion,
 albeit from C<time_t> format to C<struct tm> format, (and also C<gmtime(3)> for
 the same structure-conversion without converting to local time), and
@@ -434,11 +437,18 @@ The default value is 0, i.e. debug mode is "off".
 The following diagnostic messages may be produced by this module. They are
 classified as follows (a la L<perldiag>):
 
-	(W) A warning
-	(F) A fatal error
-	(I) An internal error that you should never see
+	(W) A warning (optional).
+	(F) A fatal error (trappable).
+	(I) An internal error that you should never see (trappable).
 
 =over 4
+
+=item Cannot handle year-specific DST clues in time zone information
+
+(F) The Win32 API function C<GetTimeZoneInformation()> returned a
+C<TIME_ZONE_INFORMATION> stucture in which one or both of the transition dates
+between standard time and daylight time are given in "absolute" format rather
+than "day-in-month" format.
 
 =item Could not close file object handle
 
@@ -450,6 +460,12 @@ C<FindFirstFile()> within C<stat()> or C<lstat()> could not be closed after use.
 (W) The file search handle opened by a call to the Win32 API function
 C<CreateFile()> within C<utime()> could not be closed after use.
 
+=item Could not convert base SYSTEMTIME to FILETIME
+
+(I) The Win32 API function C<SystemTimeToFileTime()> was unable to convert a
+C<SYSTEMTIME> representation of the epoch of C<time_t> values (namely, 00:00:00
+Jan 01 1970 UTC) to a C<FILETIME> representation.
+
 =item Could not determine name of filesystem. Assuming file times are stored as
 UTC-based values
 
@@ -458,6 +474,24 @@ determined. This information is required because different filesystems store
 file times in different formats (in particular, NTFS stores UTC-based values,
 whereas FAT stores local time-based value). A filesystem that stores UTC-based
 values is assumed in this case.
+
+=item Could not get time zone information
+
+(F) The Win32 API function C<GetTimeZoneInformation()> failed.
+
+=item The test date used in a date comparison is not in the required "absolute"
+format
+
+(I) The file time being tested against the transition dates between standard
+time and daylight time is given in "day-in-month" format rather than "absolute"
+format.
+
+=item The target date used in a date comparison is not in the required
+"day-in-month" format
+
+(I) One of the transition dates between standard time and daylight time, being
+used to test a file time against, is given in "absolute" format rather than
+"day-in-month" format.
 
 =item Unexpected error in AUTOLOAD(): constant() is not defined
 
@@ -498,8 +532,8 @@ The filename or path in I<$file> was not found.
 
 =back
 
-Note that since C<utime()> currently uses Win32 API functions rather than
-standard C library functions, it will only set C<$^E> (which represents the
+Note that since all three functions use Win32 API functions rather than standard
+C library functions, they will probably only set C<$^E> (which represents the
 Win32 API last error value, as returned by C<GetLastError()>), not C<$!> (which
 represents the standard C library C<errno> variable).
 
@@ -514,7 +548,8 @@ and L<Win32::WinError> for details on how to check these values.
 =head1 BACKGROUND REFERENCE
 
 A number of Microsoft Knowledge Base articles refer to the odd characteristics
-of the Win32 API functions involved, in particular see:
+of the Win32 API functions and the Microsoft C library functions involved, in
+particular see:
 
 =over 4
 
@@ -545,15 +580,19 @@ Visual Studio is upgraded to at least that Service Pack level when you build
 Perl and this module. (At the time of writing, Service Pack 5 is the latest
 available for Visual Studio 6.0.)
 
-An excellent overview of the problem with C<stat(2)>, together with a C library
-that sorts it out, was posted on the Code Project website
-(F<http://www.codeproject.com>) by Jonathan M Gilligan. It is that C library,
-used with permission, which this module's own workarounds are based on. (The fix
-to C<utime(2)> does not come from that library, but is inspired by it.) Jonathan
-has kindly also granted permission to reuse his article to describe the problem
-more fully. A slightly edited version of it follows; the original article and C
-library can be found at the URL
+An excellent overview of the problem with Microsoft's C<stat(2)> was written by
+Jonathan M Gilligan and posted on the Code Project website
+(F<http://www.codeproject.com>). He has kindly granted permission to use his
+article here to describe the problem more fully. A slightly edited version of it
+now follows; the original article can be found at the URL
 F<http://www.codeproject.com/datetime/dstbugs.asp>.
+
+(The article was accompanied by a C library, adapted from code written for CVSNT
+(F<http://www.cvsnt.org>) by Jonathan and Tony M Hoyle, which implemented the
+solution outlined at the end of his article. The solution provided by this
+module is based on that library and the original CVSNT code itself (version
+2.0.4), which both authors kindly granted permission to use under the terms of
+the Perl Artistic License as well as the GNU GPL.)
 
 =head2 Introduction
 
@@ -569,7 +608,7 @@ in Q158588,
 	Coordinated Time (UTC) will erroneously report time/date changes on files.
 	Programs affected by this issue may include version-control software,
 	database-synchronisation software, software-distribution packages, backup
-	software ....
+	software...
 
 This behavior is responsible for a flood of questions to the various support
 lists for CVS, following the first Sunday in April and the last Sunday in
@@ -585,10 +624,10 @@ to share my solution with anyone else who cares about this issue.
 
 =head2 An example of the problem
 
-Run the following batch file on a computer where C: is an NTFS volume and A: is
-a FAT-formatted floppy disk. You will need write access to C:\ and A:\. This
-script will change your system time and date, so be prepared to manually restore
-them afterwards.
+Run the following batch file on a computer where F<C:> is an NTFS volume and
+F<A:> is a FAT-formatted floppy disk. You will need write access to F<C:\> and
+F<A:\>. This script will change your system time and date, so be prepared to
+manually restore them afterwards.
 
 	REM Test_DST_Bug.bat
 	REM File Modification Time Test
@@ -612,7 +651,7 @@ The result looks something like this (abridged to save space)
 	C:\>dir A:\Foo.txt C:\Bar.txt
 
 	  Directory of A:\
-	10/27/01  10:00a                     6 foo.txt
+	10/27/01  10:00a                     6 Foo.txt
 	  Directory of C:\
 	10/27/01  10:30a                     6 Bar.txt
 
@@ -620,19 +659,19 @@ The result looks something like this (abridged to save space)
 	C:\>dir A:\Foo.txt C:\Bar.txt
 
 	  Directory of A:\
-	10/27/01  10:00a                     6 foo.txt
+	10/27/01  10:00a                     6 Foo.txt
 	  Directory of C:\
 	10/27/01  09:30a                     6 Bar.txt
 
-On 27 October, Windows correctly reports that Bar.txt was modified half an hour
-after Foo.txt, but the next day, Windows has changed its mind and decided that
-actually, Bar.txt was modified half an hour B<before> Foo.txt. A naïve
-programmer might think this was a bug, but as Microsoft emphasised, B<this is
-how they want Windows to behave.>
+On 27 October, Windows correctly reports that F<Bar.txt> was modified half an
+hour after F<Foo.txt>, but the next day, Windows has changed its mind and
+decided that actually, F<Bar.txt> was modified half an hour B<before>
+F<Foo.txt>. A naïve programmer might think this was a bug, but as Microsoft
+emphasised, B<this is how they want Windows to behave.>
 
 =head2 Why Windows has this problem
 
-The origin of this file-time problem lies in the early days of MS-DOS and
+The origin of this file time problem lies in the early days of MS-DOS and
 PC-DOS. Unix and other operating systems designed for continuous use and network
 communications have long tended to store times in GMT (later UTC) format so
 computers in different time zones can accurately determine the order of
@@ -715,16 +754,16 @@ time to arrive at UTC. A subtle problem emerges due to the fact that the mapping
 from UTC to local time is not one-to-one. Specifically, when we leave daylight
 savings time and set our clocks back, there are two distinct hour-long intervals
 of UTC time that map onto the same hour-long interval of local time. Consider
-the concrete case of 1:30 AM on the last Sunday in October. Let's suppose the
+the concrete case of 01:30 on the last Sunday in October. Let's suppose the
 local time zone is US Central Time (-6 hours offset from UTC when daylight time
 is not in effect, -5 hours when it is). At 06:00 UTC on Sunday 28 October 2001,
-the time in the US Central zone will be 01:00 (1:00 AM) and daylight time will
-be in effect. At 06:30 UTC, it will be 01:30 local. At 07:00 UTC, it will be
-01:00:00 local and daylight time will not be in effect. At 07:30 UTC, it will be
-01:30 local. Thus, for all times 01:00 E<lt>= t E<lt> 02:00 local, there will be
-two distinct UTC times that correspond to the given local time. This degenerate
+the time in the US Central zone will be 01:00 and daylight time will be in
+effect. At 06:30 UTC, it will be 01:30 local. At 07:00 UTC, it will be 01:00
+local and daylight time will not be in effect. At 07:30 UTC, it will be 01:30
+local. Thus, for all times 01:00 E<lt>= t E<lt> 02:00 local, there will be two
+distinct UTC times that correspond to the given local time. This degenerate
 mapping means that we can't be sure which UTC time corresponds to 01:30 local
-time. If a FAT file is marked as having been modified at 01:30 on 28 Oct 2001,
+time. If a FAT file is marked as having been modified at 01:30 on Oct 28 2001,
 we can't determine the UTC time.
 
 When translating local file times to UTC and vice-versa, Microsoft made a
@@ -739,18 +778,18 @@ equal to C<in_time>
 	LocalFileTimeToFileTime(&local_time, &out_time  );
 
 The problem is that if the local time zone is US Central (UTC-6 hours for
-standard time, UTC-5 hours for daylight time) then C<in_time> = 06:30:00 Oct 28
-2001 and C<in_time> = 07:30:00 Oct 28 2001 both map onto the same local time,
-01:30:00 Oct 28 2001 and we don't know which branch to choose when we execute
+standard time, UTC-5 hours for daylight time) then C<in_time> = 06:30 Oct 28
+2001 and C<in_time> = 07:30 Oct 28 2001 both map onto the same local time, 01:30
+Oct 28 2001 and we don't know which branch to choose when we execute
 C<LocalFileTimeToFileTime()>. Microsoft picked an incorrect, but unambiguously
 invertable algorithm: move all times up an hour when daylight time is in effect
 on the local computer, irrespective of the DST state of the time being
 converted. Thus, if DST is in effect on my local computer,
-C<FileTimeToLocalFileTime()> converts 06:30:00 Oct 28 2001 UTC to 01:30:00 CDT
-and 07:30:00 Oct 28 2001 UTC to 02:30:00 CDT. If I call the same function with
-the same arguments, but when DST is not in effect on my local computer,
-C<FileTimeToLocalFileTime()> will convert 06:30:00 UTC to 00:30:00 CDT and
-07:30:00 UTC to 01:30:00 CDT.
+C<FileTimeToLocalFileTime()> converts 06:30 Oct 28 2001 UTC to 01:30 CDT and
+07:30 Oct 28 2001 UTC to 02:30 CDT. If I call the same function with the same
+arguments, but when DST is not in effect on my local computer,
+C<FileTimeToLocalFileTime()> will convert 06:30 UTC to 00:30 CDT and 07:30 UTC
+to 01:30 CDT.
 
 It may seem strange that this would affect the C library call C<stat(2)>, which
 allegedly returns the UTC modification time of a file. If you examine the source
@@ -817,8 +856,9 @@ irrespective of the DST setting at the file modification time.
 =item *
 
 Local time is converted to "correct" UTC by private function. Note that this
-B<does not> reverse the effect of the previous step because in this step we use
-the DST setting of the I<file modification time>, not the current system time. 
+B<does not> necessarily reverse the effect of the previous step because in this
+step we use the DST setting of the I<file modification time>, not the current
+system time. 
 
 =back
 
@@ -838,7 +878,7 @@ file times may cause problems:
 
 You may be comparing a file on an NTFS volume with a C<time_t> value stored in a
 file (or memory). This is frequently seen in CVS and leads to the infamous
-"red-file" problem on the first Sunday of April and the last Sunday of October.
+"red file bug" on the first Sunday of April and the last Sunday of October.
 
 =item *
 
@@ -859,7 +899,8 @@ You may be comparing a file on a FAT volume with a file on an NTFS volume.
 For the first case, it's simple. Get the file times using the Win32 API call
 C<GetFileTime()> instead of using the C library C<stat(2)>, and convert the
 C<FILETIME> to C<time_t> by subtracting the origin (00:00:00 Jan 01 1970 UTC)
-and dividing by 10,000,000 to convert clunks (100-nanosecond units) to seconds. 
+and dividing by 10,000,000 to convert "clunks" (100-nanosecond intervals) to
+seconds. 
 
 =item *
 
@@ -882,7 +923,7 @@ October, it's ambiguous how C<mktime(3)> computes the modification time.
 
 People in time zones that do not follow the usual US daylight rule must
 brute-force the daylight time problem by retrieving the applicable
-C<TIMEZONEINFO> structure with C<GetTimeZoneInformation()> and manually
+C<TIME_ZONE_INFORMATION> structure with C<GetTimeZoneInformation()> and manually
 calculating whether daylight time applies.
 
 =item *
@@ -900,35 +941,37 @@ is stored under.
 
 That's the end of Jonathan M Gilligan's article. It should be noted that
 although the last section, L<"Solutions">, refers to the Win32 API function
-C<GetFileTime()>, his library, which this module uses, actually uses a different
-Win32 API function instead, namely, C<FindFirstFile()>. As seen in the
-pseudo-code listing above, that is the function used in Microsoft's
-implementation of C<stat(2)> itself, and has one significant advantage over
-C<GetFileTime()> which is documented in the Microsoft Knowledge Base article
-128126 cited above: C<GetFileTime()> gets I<cached> UTC times from FAT, whereas
-C<FindFirstFile()> always reads the time from the file. This means that although
-C<GetFileTime()> correctly uses the DST setting of the file time being converted
-when converting from the local time stored in FAT to UTC, it only does the
-conversion once and thereafter caches the result. So if you call
-C<GetFileTime()> twice on the same file, once either side of a DST season
-change, then the second return value will be wrong. The cache is not cleared
-until the computer is rebooted.
+C<GetFileTime()>, his library, the CVSNT code that it was adapted from, and this
+module (which also adapts that code), all use a different Win32 API function
+instead, namely, C<FindFirstFile()>. As seen in the pseudo-code listing above,
+that is the function used in Microsoft's implementation of C<stat(2)> itself,
+and evidently has one advantage over C<GetFileTime()> which is documented in the
+Microsoft Knowledge Base article 128126 cited above: C<GetFileTime()> gets
+I<cached> UTC times from FAT, whereas C<FindFirstFile()> always reads the time
+from the file. This means that the value returned by C<GetFileTime()> may be
+incorrect under FAT after a DST season change.
 
 Another look at the source for Microsoft's C library shows that everything
 written above regarding the last modification time of a file is also true of the
-last access time and creation time. This module therefore uses an extended
-version of Jonathan's C library function to apply the same corrections to the
-last access time and creation time.
+last access time and creation time. This module therefore applies the same
+corrections to those values as well, as does the CVSNT code.
 
 (Incidentally, the source code of Microsoft's implementation of C<stat(2)> can
 be found in F<C:\Program Files\Microsoft Visual Studio\VC98\CRT\SRC\STAT.C> if
 you installed Microsoft Visual C++ 6.0 in its default location and selected the
 "VC++ Runtime Libraries -E<gt> CRT Source Code" option when installing.)
 
-To summarise, the situation is therefore as follows. Here, "correctly converts"
-and "incorrectly converts" mean "applies a DST correction with respect to the
-file time being converted" and "applies a DST correction with respect to the
-current system time" respectively.
+Another enhancement to Jonathan's library incorporated into this module, taken
+from the CVSNT code, is the use of the Win32 API function
+C<GetTimeZoneInformation()> to apply the correct daylight saving time rule,
+rather than assuming the United States' rule, as hinted at in the L<"Solutions">
+section above.
+
+To summarise the quirks of the various file time functions involved, the
+situation is as follows. Here, "correctly converts" and "incorrectly converts"
+mean "applies a DST correction with respect to the file time being converted"
+and "applies a DST correction with respect to the current system time"
+respectively.
 
 =over 4
 
@@ -973,6 +1016,12 @@ is in daylight time so apply a correction, E<lt>0 means have C<mktime(3)> itself
 compute whether or not daylight savings time is in effect (using the United
 States' rule to decide).
 
+=item GetTimeZoneInformation()
+
+Returns information about the current time zone that can be used to determine
+whether or not a given time is in daylight saving time and hence requires a DST
+correction to be applied when converting.
+
 =item FileTimeToLocalFileTime()
 
 Incorrectly converts a UTC file time to local time.
@@ -1003,12 +1052,12 @@ above, is basically:
 The solution implemented in the library used by this module is essentially a
 combination of the L<"Solutions"> of the various cases outlined above, but using
 C<FindFirstFile()> rather than C<GetFileTime()> to avoid the caching problem
-under FAT:
+under FAT and incorporating the use of C<GetTimeZoneInformation()>:
 
 	FindFirstFile()	// calls LocalFileTimeToFileTime() on FAT
 	if (IsFATVolume) {
 		FileTimeToLocalFileTime()
-		mktime()
+		// Correctly convert local time to UTC using GetTimeZoneInformation()
 	}
 
 =head2 More problems: utime()
@@ -1074,9 +1123,9 @@ UTC is stored in the filesystem.
 
 =back
 
-We therefore have a very similar situation as for C<stat(2)>: under FAT, three
-conversions are applied, two of which cancel each other out, leaving the UTC
-file times supplied correctly converted to local time; under NTFS two
+We therefore have a situation very similar to that for C<stat(2)>: under FAT,
+three conversions are applied, two of which cancel each other out, leaving the
+UTC file times supplied correctly converted to local time; under NTFS two
 conversions are applied which are not the exact inverses of each other, leaving
 the UTC file times supplied potentially wrong by one hour.
 
@@ -1092,11 +1141,8 @@ function involved (in this case, C<SetFileTime()>) under FAT to be cancelled
 out:
 
 	if (IsFATVolume) {
-		localtime()
+		// Correctly convert UTC to local time using GetTimeZoneInformation()
 		LocalFileTimeToFileTime()
-	}
-	else {
-		gmtime()
 	}
 	SetFileTime()	// calls FileTimeToLocalFileTime() on FAT
 
@@ -1158,13 +1204,13 @@ Microsoft Knowledge Base article Q158588 cited above specifically mentions that
 the behaviour of C<GetFileTime()> under FAT may be changed to match the
 behaviour under NTFS in a future version of Windows NT. That particular change,
 however, would have no effect on this module because, as mentioned above,
-C<GetFileTime()> isn't used by it .)
+C<GetFileTime()> isn't used by it.)
 
 Likewise, if corrections such as those applied by this module are ever
-incorporated into the Perl core (so that Perl's built-in C<stat()> and
-C<utime()> functions get/set correct UTC values themselves, even when built on
-the faulty Microsoft C library functions) then again, the corrections applied by
-this module would not be appropriate.
+incorporated into the Perl core (so that Perl's built-in C<stat()>, C<lstat()>
+and C<utime()> functions get/set correct UTC values themselves, even when built
+on the faulty Microsoft C library functions) then again, the corrections applied
+by this module would not be appropriate.
 
 In either case, this module would either need updating appropriately, or may
 even become redundant.
@@ -1172,12 +1218,15 @@ even become redundant.
 =item *
 
 As seen from the pseudo-code above, when handling files on FAT volumes, this
-module's replacement C<stat()> function uses C<mktime(3)> to convert the local
-time stored in the filesystem to UTC. The C<tm_isdst> field of the C<struct tm>
-is set to -1 in this call, which instructs it to use the United States' rule for
-deciding whether or not to apply a DST correction. It should be more intelligent
-about this, and use C<GetTimeZoneInformation()> to figure out what the
-appropriate DST rule is.
+module's replacement functions all use the Win32 API function
+C<GetTimeZoneInformation()> to figure out what the appropriate DST rule is. The
+information returned by that function can either be in "absolute" format (in
+which the transition dates between standard time and daylight time are given by
+exact dates and times, including the year) or in "day-in-month" format (in which
+those transition dates are given in such a way that clues like "the last Sunday
+in April" can be expressed, and no specific year is mentioned). Only the
+"day-in-month" format is handled by this module; the functions throw exceptions
+if the transition dates are returned in "absolute" format.
 
 =item *
 
@@ -1194,7 +1243,7 @@ F<D:> drive could be a different filesystem. Instead, the code should retrieve
 the volume mount point (in this case, F<C:\mnt\d-drive>) using
 C<GetVolumePathName()>, then get the name of the corresponding volume (in this
 case, F<D:>) using C<GetVolumeNameForVolumeMountPoint()>, and finally determine
-the filesystem from that as it currently does (using C<GetVolumeInformation()>).
+the filesystem from that (using C<GetVolumeInformation()> as it currently does).
 
 Such an improvement will need to contend with the fact that
 C<GetVolumePathName()> and C<GetVolumeNameForVolumeMountPoint()> are only
@@ -1215,14 +1264,12 @@ L<Win32::FileTime>.
 
 =head1 ACKNOWLEDGEMENTS
 
-Many thanks to Jonathan M Gilligan E<lt>jonathan.gilligan@vanderbilt.eduE<gt>,
-who wrote the C library that this module is based on and made it freely
-available to the world, and who also wrote an excellent accompanying article
-describing the problem and his solution, most of which is reproduced in the
-L<"BACKGROUND REFERENCE"> section of this manpage. Thanks also to Tony M Hoyle
-E<lt>tmh@nodomain.orgE<gt> who wrote one of the functions in Jonathan's library.
-Both authors kindly gave their permission to re-use their work in this module
-under the terms of the Perl Artistic License as well as the GNU GPL.
+Many thanks to Jonathan M Gilligan E<lt>jonathan.gilligan@vanderbilt.eduE<gt>
+and Tony M Hoyle E<lt>tmh@nodomain.orgE<gt> who wrote the C code that this
+module is based on and granted permission to use it under the terms of the Perl
+Artistic License as well as the GNU GPL. Extras thanks to Jonathan for also
+granting permission to use his article describing the problem and his solution
+to it in the L<"BACKGROUND REFERENCE"> section of this manpage.
 
 Credit is also due to Slaven Rezic for finding Jonathan's work on the Code
 Project website (F<http://www.codeproject.com>) in response to my bug report
@@ -1248,12 +1295,12 @@ the same terms as Perl itself.
 
 =head1 VERSION
 
-Win32::UTCFileTime, Version 1.00
+Win32::UTCFileTime, Version 1.10
 
 =head1 HISTORY
 
 See the file F<Changes> in the original distribution archive,
-F<Win32-UTCFileTime-1.00.tar.gz>.
+F<Win32-UTCFileTime-1.10.tar.gz>.
 
 =cut
 
