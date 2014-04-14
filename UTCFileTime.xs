@@ -6,9 +6,9 @@
  *   C and XS portions of Win32::UTCFileTime module.
  *
  * COPYRIGHT
- *   Copyright (c) 2003-2004, Steve Hay.  All rights reserved.
- *   Portions Copyright (c) 2001, Jonathan M Gilligan.  Used with permission.
- *   Portions Copyright (c) 2001, Tony M Hoyle.  Used with permission.
+ *   Copyright (C) 2003-2005 Steve Hay.  All rights reserved.
+ *   Portions Copyright (C) 2001 Jonathan M Gilligan.  Used with permission.
+ *   Portions Copyright (C) 2001 Tony M Hoyle.  Used with permission.
  *
  * LICENCE
  *   You may distribute under the terms of either the GNU General Public License
@@ -138,11 +138,11 @@ static FILETIME win32_utcfiletime_base_ft;
 static BOOL Win32UTCFileTime_IsWinNT(pTHX_ pMY_CXT) {
     /* These statics are set "on demand" and are not subsequently changed, so
      * are virtually "consts"s and are therefore thread-safe. */
-    static BOOL initialised = FALSE;
+    static BOOL initialized = FALSE;
     static BOOL is_winnt;
     OSVERSIONINFO osver;
 
-    if (!initialised) {
+    if (!initialized) {
         Zero(&osver, 1, OSVERSIONINFO);
         osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
         if (GetVersionEx(&osver)) {
@@ -153,7 +153,7 @@ static BOOL Win32UTCFileTime_IsWinNT(pTHX_ pMY_CXT) {
                  "platform is Windows NT", WIN32_UTCFILETIME_WIN_ERR_STR);
             is_winnt = TRUE;
         }
-        initialised = TRUE;
+        initialized = TRUE;
     }
 
     return is_winnt;

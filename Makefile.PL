@@ -7,7 +7,7 @@
 #   Makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (c) 2003-2004, Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -38,13 +38,23 @@ BEGIN {
 #===============================================================================
 
 MAIN: {
-    name          ('Win32-UTCFileTime');
-    abstract_from ('lib/Win32/UTCFileTime.pm');
-    version_from  ('lib/Win32/UTCFileTime.pm');
-    author        ('Steve Hay <shay@cpan.org>');
-    license       ('perl');
-    perl_version  (5.006000);
-    clean_files   ('const-c.inc const-xs.inc');
+    name           ('Win32-UTCFileTime');
+    abstract_from  ('lib/Win32/UTCFileTime.pm');
+    version_from   ('lib/Win32/UTCFileTime.pm');
+    author         ('Steve Hay <shay@cpan.org>');
+    license        ('perl');
+    perl_version   (5.006000);
+    features       ('POD testing' => [
+        -default   => 0,
+        recommends ('Test::Pod' => '1.00')
+    ]);
+    include        ('ExtUtils::AutoInstall');
+    clean_files    ('const-c.inc const-xs.inc');
+
+    my $obj = get_shay_private_obj();
+    $obj->check_compiler(0);
+
+    auto_install();
 
     WriteMakefile(
         dist => {

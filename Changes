@@ -1,9 +1,34 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.41
+                        Win32::UTCFileTime, Version 1.42
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.42 03 Mar 2005
+
+    - Added code to Makefile.PL to try to check that the same compiler is being
+      used to build these modules as was used to build Perl itself to avoid
+      problems with binaries built by different compiler versions loading
+      different C runtime DLL's.
+
+    - Added a recommendation for Test::Pod to Makefile.PL to test the POD when
+      building these modules.  Included ExtUtils::AutoInstall to facilitate
+      this.
+
+    - Updated ppport.h using version 3.06 of the Devel::PPPort distribution.
+
+    - Corrected spelling mistakes: categorise, emphasise, initialise, realise,
+      specialise, summarise and synchronise are more properly spelled
+      categorize, emphasize, initialize, realize, specialize, summarize and
+      synchronize respectively.
+
+    - Corrected "daylight savings time" to "daylight saving time" (except in
+      Microsoft Knowledge Base article titles) in the POD.
+
+    - Fixed up copyright years in all files to reflect which files actually
+      changed in each year.
 _________________
 
 v1.41 12 Dec 2004

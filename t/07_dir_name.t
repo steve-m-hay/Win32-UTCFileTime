@@ -7,7 +7,7 @@
 #   Test script to check getting info for various directory names.
 #
 # COPYRIGHT
-#   Copyright (c) 2003-2004, Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2004 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License

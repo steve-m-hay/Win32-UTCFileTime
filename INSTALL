@@ -1,7 +1,48 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.41
+                        Win32::UTCFileTime, Version 1.42
 ________________________________________________________________________________
+
+PREREQUISITES
+
+    Windows
+
+        This module is only applicable on "native" (i.e. non-Cygwin) Microsoft
+        Windows platforms since only those platforms have C runtime libraries
+        that suffer the behaviour which this module provides corrections to.
+
+    Compiler
+
+        You need a C compiler to build this module.
+
+        Note that you should try to use the same compiler to build this module
+        as was used to build your Perl itself.
+
+        In particular, this module may not work correctly if it loads a
+        different C runtime DLL to that loaded by perl itself.  Note that Visual
+        Studio 98 (VC++ 6) and earlier produce binaries that require the
+        system's msvcrt.dll, while Visual Studio .NET/2003 (VC++ 7) and later
+        (including the free Visual C++ Toolkit 2003) produce binaries that
+        require compiler-specific DLL's named msvcr70.dll, msvcr71.dll, etc.
+        Therefore, building this module with the Visual C++ Toolkit 2003 for use
+        with any ActivePerl, which are known currently to be built with Visual
+        Studio 98, may not work.
+
+        The Makefile.PL script will try to detect if a different compiler is
+        being used and will give a warning if necessary.  Note, however, that it
+        is not always possible for it to detect which particular compiler
+        version was used to build Perl, especially for Perl version 5.8.6 or
+        older which didn't have this information stored in the standard library
+        module Config.
+
+    Perl
+
+        Perl version 5.6.0 or later.
+        The latest version of Perl is available from http://www.perl.com/.
+
+    Perl Modules
+
+        There are no non-standard Perl modules required by this module.
 
 INSTALLATION
 
@@ -18,25 +59,4 @@ INSTALLATION
     Perl type the following:
 
         perl -V:make
-
-    Note that you should try to use the same compiler to build this module as
-    was used to build your Perl itself.
-
-    In particular, linking against the msvcrt.lib import library that comes with
-    recent versions of the Microsoft Visual C++ compiler (version 7 and above)
-    now produces binaries that depend on compiler-specific DLL's named
-    msvcr70.dll, msvcr71.dll, etc, rather than the OS's msvcrt.dll.  This module
-    may not work correctly if you build it with a different compiler than was
-    used to build your Perl such that two different C runtime DLL's get loaded.
-
-PREREQUISITES
-
-    This module is only applicable on "native" (i.e. non-Cygwin) Microsoft
-    Windows platforms since only those platforms have C runtime libraries that
-    suffer the behaviour which this module provides corrections to.
-
-    Perl version 5.6.0 or later.
-    The latest version of Perl is available from http://www.perl.com/.
-
-    There are no non-standard Perl modules required by this module.
 ________________________________________________________________________________

@@ -7,7 +7,7 @@
 #   Win32.
 #
 # COPYRIGHT
-#   Copyright (c) 2003-2004, Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -51,7 +51,7 @@ BEGIN {
         alt_stat
     );
     
-    $VERSION = '1.41';
+    $VERSION = '1.42';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -94,7 +94,7 @@ sub AUTOLOAD {
     goto &$AUTOLOAD;
 }
 
-# Specialised import() method to handle the ':globally' pseudo-symbol.
+# Specialized import() method to handle the ':globally' pseudo-symbol.
 # This method is based on the import() method in the standard library module
 # File::Glob (version 1.01).
 
@@ -823,7 +823,7 @@ particular see:
 
 =back
 
-As these articles themselves emphasise, the behaviour in question is by design,
+As these articles themselves emphasize, the behaviour in question is by design,
 not a bug.  As an aside, another Microsoft Knowledge Base article (214661: FIX:
 Daylight Savings Time Bug in C Run-Time Library) refers to a different problem
 involving the Microsoft C library that was confirmed as a bug and was fixed in
@@ -859,7 +859,7 @@ writes in Q158588,
     written using Win32 API calls which directly obtain/adjust to Universal
     Coordinated Time (UTC) will erroneously report time/date changes on files.
     Programs affected by this issue may include version-control software,
-    database-synchronisation software, software-distribution packages, backup
+    database-synchronization software, software-distribution packages, backup
     software...
 
 This behavior is responsible for a flood of questions to the various support
@@ -919,7 +919,7 @@ On 27 October, Windows correctly reports that F<Bar.txt> was modified half an
 hour after F<Foo.txt>, but the next day, Windows has changed its mind and
 decided that actually, F<Bar.txt> was modified half an hour B<before>
 F<Foo.txt>.  A naive programmer might think this was a bug, but as Microsoft
-emphasised, B<this is how they want Windows to behave.>
+emphasized, B<this is how they want Windows to behave.>
 
 =head2 Why Windows has this problem
 
@@ -942,7 +942,7 @@ prompt you to enter the date and time manually when the computer booted.
 =head2 Digression on systems of measuring time
 
 By the time of WinNT, wide-area networks and had become sufficiently common that
-Microsoft realised that the OS should measure time in some universal format that
+Microsoft realized that the OS should measure time in some universal format that
 would allow different computers to compare the order (and separation) of events
 irrespective of their particular time zones.  Although the details vary
 (different time structures measure time relative to different events), the net
@@ -993,7 +993,7 @@ local time zone from UTC.
 
 It is straightforward to translate UTC to local time.  You look up the offset,
 in minutes, between the local time zone and UTC, determine whether daylight
-savings is in effect and add either the standard or the daylight offset to the
+saving is in effect and add either the standard or the daylight offset to the
 UTC time.  However, daylight time throws a subtle wrench in the works if we try
 to go backwards...
 
@@ -1004,7 +1004,7 @@ straightforward matter of determining whether daylight time is in effect locally
 and then subtracting either the standard or the daylight offset from the local
 time to arrive at UTC.  A subtle problem emerges due to the fact that the
 mapping from UTC to local time is not one-to-one.  Specifically, when we leave
-daylight savings time and set our clocks back, there are two distinct hour-long
+daylight saving time and set our clocks back, there are two distinct hour-long
 intervals of UTC time that map onto the same hour-long interval of local time.
 Consider the concrete case of 01:30 on the last Sunday in October.  Let's
 suppose the local time zone is US Central Time (-6 hours offset from UTC when
@@ -1116,10 +1116,10 @@ system time.
 
 This explains the problem I showed at the top of this article: The time reported
 by C<dir> for a file on an NTFS volume changes by an hour as we move into or out
-of daylight savings time, despite the fact that the file hasn't been touched.
+of daylight saving time, despite the fact that the file hasn't been touched.
 FAT modification times are stable across DST seasons.
 
-=head2 Categorising the problem
+=head2 Categorizing the problem
 
 There are 3 possible ways I can think of where this inconsistency in reporting
 file times may cause problems:
@@ -1130,7 +1130,7 @@ file times may cause problems:
 
 You may be comparing a file on an NTFS volume with a C<time_t> value stored in a
 file (or memory).  This is frequently seen in CVS and leads to the infamous
-"red file bug" on the first Sunday of April and the last Sunday of October.
+"red file bug" on the first Sunday in April and the last Sunday in October.
 
 =item *
 
@@ -1167,7 +1167,7 @@ C<struct tm>>.
 There is a bit of a chicken-and-egg problem here.  Windows does not supply a
 good API call to let you determine whether DST was in effect at a given time.
 Fortunately for residents of the US and other countries that use the same logic
-(Daylight time starts at 2:00 AM on the first Sunday of April and ends at 2:00
+(Daylight time starts at 2:00 AM on the first Sunday in April and ends at 2:00
 AM on the last Sunday in October), you can set C<tm_isdst> to a negative number
 and C<mktime(3)> will automatically determine whether daylight time applies or
 not.  If the file was modified in the window 1:00-2:00 AM on the last Sunday in
@@ -1217,9 +1217,13 @@ Another enhancement to Jonathan's library incorporated into this module, taken
 from the CVSNT code, is the use of the Win32 API function
 C<GetTimeZoneInformation()> to apply the correct daylight saving time rule,
 rather than assuming the United States' rule, as hinted at in the L<"Solutions">
-section above.
+section above.  This is particularly important for residents of the European
+Union, which does actually follow a slightly different rule: summer time (as it
+tends to be known in Europe, rather than daylight saving time) begins at 1:00 AM
+UTC on the last Sunday in March and ends at 1:00 AM UTC on the last Sunday in
+October.
 
-To summarise the quirks of the various file time functions involved, the
+To summarize the quirks of the various file time functions involved, the
 situation is as follows.  Here, "correctly converts" and "incorrectly converts"
 mean "applies a DST correction with respect to the file time being converted"
 and "applies a DST correction with respect to the current system time"
@@ -1265,7 +1269,7 @@ Whether or not a DST correction is applied depends on the value of the
 C<tm_isdst> field of the C<struct tm> argument: 0 means the local time being
 converted is in standard time so don't apply a correction, E<gt>0 means means it
 is in daylight time so apply a correction, E<lt>0 means have C<mktime(3)> itself
-compute whether or not daylight savings time is in effect (using the United
+compute whether or not daylight saving time is in effect (using the United
 States' rule to decide).
 
 =item GetTimeZoneInformation()
@@ -1475,7 +1479,7 @@ C<GetTimeZoneInformation()> to figure out what the appropriate DST rule is.  The
 information returned by that function can either be in "absolute" format (in
 which the transition dates between standard time and daylight time are given by
 exact dates and times, including the year) or in "day-in-month" format (in which
-those transition dates are given in such a way that clues like "the last Sunday
+those transition dates are given in such a way that clues like "the first Sunday
 in April" can be expressed, and no specific year is mentioned).  Only the
 "day-in-month" format is handled by this module; the functions throw exceptions
 if the transition dates are returned in "absolute" format.
@@ -1581,11 +1585,11 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2003-2004, Steve Hay.  All rights reserved.
+Copyright (C) 2003-2005 Steve Hay.  All rights reserved.
 
-Portions Copyright (c) 2001, Jonathan M Gilligan.  Used with permission.
+Portions Copyright (C) 2001 Jonathan M Gilligan.  Used with permission.
 
-Portions Copyright (c) 2001, Tony M Hoyle.  Used with permission.
+Portions Copyright (C) 2001 Tony M Hoyle.  Used with permission.
 
 =head1 LICENCE
 
@@ -1595,11 +1599,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.41
+Version 1.42
 
 =head1 DATE
 
-12 Dec 2004
+03 Mar 2005
 
 =head1 HISTORY
 
