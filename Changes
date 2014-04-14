@@ -1,9 +1,22 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.49
+                        Win32::UTCFileTime, Version 1.50
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.50 25 Aug 2008
+
+    - Silenced a warning from Visual C++ 8.x onwards, which now defines time_t
+      as a 64-bit integer by default. A better solution to take advantage of the
+      larger time_t size may be forthcoming.
+
+    - Updated Module::Install components from version 0.77 of that distribution.
+
+    - Changed the use of "eval { ... };" to test the return value rather than $@
+      since under certain circumstances $@ can end up undefined after a failed
+      eval.
 _________________
 
 v1.49 09 Jul 2008

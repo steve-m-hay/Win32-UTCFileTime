@@ -40,11 +40,11 @@ my $types = {map {($_, 1)} qw(IV)};
 my @names = (qw(SEM_FAILCRITICALERRORS SEM_NOALIGNMENTFAULTEXCEPT
 	       SEM_NOGPFAULTERRORBOX SEM_NOOPENFILEERRORBOX));
 
-print constant_types(), "\n"; # macro defs
+print constant_types(); # macro defs
 foreach (C_constant ("Win32::UTCFileTime", 'constant', 'IV', $types, undef, 3, @names) ) {
     print $_, "\n"; # C constant subs
 }
-print "\n#### XS Section:\n";
+print "#### XS Section:\n";
 print XS_constant ("Win32::UTCFileTime", $types);
 __END__
    */

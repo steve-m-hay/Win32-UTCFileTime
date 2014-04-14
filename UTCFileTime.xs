@@ -188,7 +188,7 @@ static BOOL Win32UTCFileTime_UnixTimeToFileTime(pTHX_ pMY_CXT_
      * number of clunks since 00:00:00 Jan 01 1601 UTC) by converting
      * seconds to clunks and then adding the FILETIME representation of the
      * epoch of time_t values. */
-    it.LowPart   = ut;
+    it.LowPart   = (DWORD)ut;
     it.HighPart  = 0;
     it.QuadPart *= win32_utcfiletime_clunks_per_second;
     it.QuadPart += ((ULARGE_INTEGER *)&win32_utcfiletime_base_ft)->QuadPart;
