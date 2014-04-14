@@ -1,17 +1,40 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.42
+                        Win32::UTCFileTime, Version 1.43
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
 _________________
 
+v1.43 01 Jun 2005
+
+    - Updated Module::Install::PRIVATE to version 1.02 for Makefile.PL
+      improvements:
+
+      * ExtUtils::AutoInstall command-line options are now better supported,
+        fixing problems with custom option handling that didn't recognize them;
+
+      * Errors now croak() rather than die() so that the error messages look a
+        little more friendly;
+
+      * If the "auto install" checks loaded Test::Builder then that module's
+        cleanup diagnostic code is now skipped, which suppresses the somewhat
+        confusing (given the context) message
+
+          # Looks like your test died before it could output anything.
+
+        in the event of any subsequent error that causes Makefile.PL to croak().
+_________________
+
 v1.42 03 Mar 2005
 
-    - Added code to Makefile.PL to try to check that the same compiler is being
-      used to build these modules as was used to build Perl itself to avoid
-      problems with binaries built by different compiler versions loading
-      different C runtime DLL's.
+    - Included Module::Install::PRIVATE version 1.01 for Makefile.PL
+      improvements:
+
+      * Added code to try to check that on Win32 the same compiler is being used
+        to build this module as was used to build Perl itself to avoid problems
+        with binaries built by different compiler versions loading different C
+        runtime DLL's.
 
     - Added a recommendation for Test::Pod to Makefile.PL to test the POD when
       building these modules.  Included ExtUtils::AutoInstall to facilitate
