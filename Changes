@@ -1,9 +1,16 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.51
+                        Win32::UTCFileTime, Version 1.52
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.52 25 Oct 2009
+
+    - Updated Module::Install components from version 0.91 of that distribution.
+
+    - Updated ppport.h using version 3.19 of the Devel::PPPort distribution.
 _________________
 
 v1.51 11 Oct 2009
