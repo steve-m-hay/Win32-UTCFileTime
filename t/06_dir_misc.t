@@ -4,7 +4,7 @@
 # t/06_dir_misc.t
 #
 # DESCRIPTION
-#   Test script to check getting miscellaneous directory info.
+#   Test script to check getting miscellaneous directory information.
 #
 # COPYRIGHT
 #   Copyright (C) 2003-2005 Steve Hay.  All rights reserved.

@@ -7,7 +7,7 @@
 #   Win32.
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2006 Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2007 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -51,7 +51,7 @@ BEGIN {
         alt_stat
     );
     
-    $VERSION = '1.45';
+    $VERSION = '1.46';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -1528,7 +1528,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2003-2006 Steve Hay.  All rights reserved.
+Copyright (C) 2003-2007 Steve Hay.  All rights reserved.
 
 Portions Copyright (C) 2001 Jonathan M Gilligan.  Used with permission.
 
@@ -1542,11 +1542,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.45
+Version 1.46
 
 =head1 DATE
 
-14 Feb 2006
+10 Jul 2007
 
 =head1 HISTORY
 

@@ -1,9 +1,24 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.45
+                        Win32::UTCFileTime, Version 1.46
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.46 10 Jul 2007
+
+    - Updated Module::Install::PRIVATE to version 1.05 for Makefile.PL
+      improvements:
+
+      * Fixed the compiler version checking on Win32 for Visual C++ 8.x, which
+        now uses four numbers separated by dots for its compiler version.
+        
+    - Updated Module::Install components from version 0.65 of that distribution.
+
+    - Updated ppport.h using version 3.11 of the Devel::PPPort distribution.
+
+    - Added comments to MANIFEST file.
 _________________
 
 v1.45 14 Feb 2006
@@ -42,7 +57,7 @@ v1.45 14 Feb 2006
 
       * Fixed the handling of user-input relative directory paths so that they
         are converted to absolute paths before use in case the Makefile.PL has
-        changed to another directory in the meantime.
+        changed to another directory in the meantime;
 
       * Renamed lots of methods for a better naming convention.
 
@@ -69,7 +84,7 @@ v1.44 02 Sep 2005
 
       * Relaxed the compiler version checking so that only the major version
         numbers have to match (and also the minor version numbers for VC++ 7 and
-        later, which use CRT DLL's named msvcr70.dll, msvcr71.dll, etc)
+        later, which use CRT DLLs named msvcr70.dll, msvcr71.dll, etc)
         
         (Thanks to Sisyphus <sisyphus1@optusnet.com.au> for drawing attention to
         this problem via the PAR mailing list (par@perl.org));
@@ -113,7 +128,7 @@ v1.42 03 Mar 2005
       * Added code to try to check that on Win32 the same compiler is being used
         to build this module as was used to build Perl itself to avoid problems
         with binaries built by different compiler versions loading different C
-        run-time DLL's.
+        run-time DLLs.
 
     - Added a recommendation for Test::Pod to Makefile.PL to test the POD when
       building these modules.  Included ExtUtils::AutoInstall to facilitate
@@ -136,7 +151,7 @@ _________________
 v1.41 12 Dec 2004
 
     - Moved XSLoader::load() call inside BEGIN subroutine as recommended by the
-      XSLoader manpage.  This means that the XSUB's are now installed before the
+      XSLoader manpage.  This means that the XSUBs are now installed before the
       rest of the Perl module is compiled, and hence their prototypes are now
       known, and can be checked, during the remaining compilation.
 _________________
@@ -293,9 +308,9 @@ v1.20 24 Sep 2003
       tried by the replacement stat() and lstat() functions if the built-in
       functions that they call first fail.
 
-    - Changed the replacement utime()'s use of Perl's trick for making it work
-      on directories too.  The trick only works under Windows NT platforms, so
-      it is more appropriate to try a more natural approach first and only fall
+    - Changed the replacement utime()s use of Perl's trick for making it work on
+      directories too.  The trick only works under Windows NT platforms, so it
+      is more appropriate to try a more natural approach first and only fall
       back on the trick if that fails.  This is the approach that Perl uses too.
 
     - Improved the replacement stat() and lstat() functions by having them fall
@@ -311,7 +326,7 @@ v1.20 24 Sep 2003
       speed-up.
 
     - Changed the output of debug information to use warn() rather than simply
-      print()'ing to STDERR to enable the information to be captured by a
+      print()ing to STDERR to enable the information to be captured by a
       $SIG{__WARN__} handler if required.
 
     - Added new test scripts to exercise the new and improved features.

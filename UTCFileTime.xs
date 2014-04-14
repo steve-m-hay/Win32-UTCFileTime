@@ -41,7 +41,7 @@
 
 #include "patchlevel.h"                 /* Get the version numbers first.     */
 
-#if(PERL_REVISION == 5 && PERL_VERSION > 6)
+#if (PERL_REVISION == 5 && PERL_VERSION > 6)
 #  define PERLIO_NOT_STDIO 0            /* See the "perlapio" manpage.        */
 #endif
 

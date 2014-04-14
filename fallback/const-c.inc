@@ -33,18 +33,18 @@ constant (pTHX_ const char *name, STRLEN len, IV *iv_return) {
      Regenerate these constant functions by feeding this entire source file to
      perl -x
 
-#!C:\Dev\Perls\VC6\Release\perl588\bin\perl.exe -w
+#!C:\perl5\bin\perl.exe -w
 use ExtUtils::Constant qw (constant_types C_constant XS_constant);
 
 my $types = {map {($_, 1)} qw(IV)};
 my @names = (qw(SEM_FAILCRITICALERRORS SEM_NOALIGNMENTFAULTEXCEPT
 	       SEM_NOGPFAULTERRORBOX SEM_NOOPENFILEERRORBOX));
 
-print constant_types(); # macro defs
+print constant_types(), "\n"; # macro defs
 foreach (C_constant ("Win32::UTCFileTime", 'constant', 'IV', $types, undef, 3, @names) ) {
     print $_, "\n"; # C constant subs
 }
-print "#### XS Section:\n";
+print "\n#### XS Section:\n";
 print XS_constant ("Win32::UTCFileTime", $types);
 __END__
    */
