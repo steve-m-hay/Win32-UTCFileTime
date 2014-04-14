@@ -1,0 +1,15 @@
+________________________________________________________________________________
+
+Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.00 05 Jun 2003
+
+	- First released version.
+_________________
+
+v0.01 20 May 2003
+
+	- Original version; created by h2xs 1.22 with options:
+	  -n Win32::UTCFileTime -b 5.6.0
+________________________________________________________________________________

@@ -1,0 +1,44 @@
+#-------------------------------------------------------------------------------
+# Copyright (c)	2003, Steve Hay. All rights reserved.
+#
+# Module Name:	Win32::UTCFileTime
+# Source File:	typemap
+# Description:	XS typemap
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+#
+# Typemap section. How to map a given C type to a Perl value.
+#
+
+TYPEMAP
+
+const char *	T_PV_len
+const time_t	T_NV
+const UINT		T_UV
+UINT			T_UV
+BOOL			T_BOOL
+
+#-------------------------------------------------------------------------------
+#
+# Input section. How to translate Perl values ($arg) into variables ($var) of a
+# given C type ($type).
+#
+
+INPUT
+
+T_PV_len
+	{
+	STRLEN _pv_len;
+	$var = ($type) SvPV($arg, _pv_len);
+	}
+
+#-------------------------------------------------------------------------------
+#
+# Output section. How to translate variables ($var) of a given C type to Perl
+# values ($arg).
+#
+
+OUTPUT
+
+#-------------------------------------------------------------------------------
