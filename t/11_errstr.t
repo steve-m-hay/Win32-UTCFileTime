@@ -1,7 +1,7 @@
 #!perl
 #===============================================================================
 #
-# t/09_errstr.t
+# t/11_errstr.t
 #
 # DESCRIPTION
 #   Test script to check $ErrStr variable.

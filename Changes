@@ -1,9 +1,18 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.53
+                        Win32::UTCFileTime, Version 1.54
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.54 05 Mar 2012
+
+    - Fixed a bug in the Win32UTCFileTime_SetUTCFileTimes() C function (used by
+      the replacement utime() function) in which a file descriptor was wrongly
+      being left open, with only its underlying file object handle being closed.
+      Added new test scripts to check that none of the functions are now leaking
+      filehandles.  (Fixes [cpan #65095].)
 _________________
 
 v1.53 28 Feb 2012

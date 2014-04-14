@@ -6,7 +6,7 @@
  *   C and XS portions of Win32::UTCFileTime module.
  *
  * COPYRIGHT
- *   Copyright (C) 2003-2006, 2008 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2003-2006, 2008, 2012 Steve Hay.  All rights reserved.
  *   Portions Copyright (C) 2001 Jonathan M Gilligan.  Used with permission.
  *   Portions Copyright (C) 2001 Tony M Hoyle.  Used with permission.
  *
@@ -470,6 +470,7 @@ static BOOL Win32UTCFileTime_SetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
         if (PerlLIO_close(fd) < 0)
             warn("Can't close file descriptor '%d' for file '%s': %s",
                  fd, name, WIN32_UTCFILETIME_SYS_ERR_STR);
+        fd = -1;
 
         if ((hndl = CreateFile(name, GENERIC_READ | GENERIC_WRITE,
                 FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0,
@@ -508,9 +509,20 @@ static BOOL Win32UTCFileTime_SetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
         ret = FALSE;
     }
 
-    if (!CloseHandle(hndl))
-        warn("Can't close file object handle '%lu' for file '%s' after "
-             "updating: %s", hndl, name, WIN32_UTCFILETIME_WIN_ERR_STR);
+    /* Close the file descriptor if it is open.  This closes the underlying file
+     * object handle as well, so there is no need to call CloseHandle() too.
+     * Otherwise we only have a file object handle open, so just close that
+     * directly. */
+    if (fd >= 0) {
+        if (PerlLIO_close(fd) < 0)
+            warn("Can't close file descriptor '%d' for file '%s' after "
+                 "updating: %s", fd, name, WIN32_UTCFILETIME_SYS_ERR_STR);
+    }
+    else {
+        if (!CloseHandle(hndl))
+            warn("Can't close file object handle '%lu' for file '%s' after "
+                 "updating: %s", hndl, name, WIN32_UTCFILETIME_WIN_ERR_STR);
+    }
 
     return ret;
 }

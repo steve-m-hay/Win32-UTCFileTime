@@ -32,5 +32,7 @@ t/05_file_misc.t                     See if getting miscellaneous file informati
 t/06_dir_misc.t                      See if getting miscellaneous directory information works
 t/07_dir_name.t                      See if getting information for various directory names works
 t/08_default_arg.t                   See if default arguments work
-t/09_errstr.t                        See if $ErrStr variable works
-t/10_pod.t                           See if POD is OK
+t/09_stat_fh_leak.t                  See if stat(), lstat() or alt_stat() leak filehandles
+t/10_utime_fh_leak.t                 See if utime() leaks filehandles
+t/11_errstr.t                        See if $ErrStr variable works
+t/12_pod.t                           See if POD is OK
