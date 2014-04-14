@@ -1,9 +1,19 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.48
+                        Win32::UTCFileTime, Version 1.49
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.49 09 Jul 2008
+
+    - Changed dwDesiredAccess and dwShareMode flags in the CreateFile() calls in
+      stat() and alt_stat() from GENERIC_READ and FILE_SHARE_READ to 0 and 0 as
+      per the CreateFile() call in perl's own win32_stat(). This allows those
+      functions to operate on a file that is opened by another process that is
+      denying access to other processes trying to read the file. (Fixes
+      [cpan #37535].)
 _________________
 
 v1.48 06 Jul 2008

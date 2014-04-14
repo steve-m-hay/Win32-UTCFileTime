@@ -6,7 +6,7 @@
  *   C and XS portions of Win32::UTCFileTime module.
  *
  * COPYRIGHT
- *   Copyright (C) 2003-2006 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2003-2006, 2008 Steve Hay.  All rights reserved.
  *   Portions Copyright (C) 2001 Jonathan M Gilligan.  Used with permission.
  *   Portions Copyright (C) 2001 Tony M Hoyle.  Used with permission.
  *
@@ -289,9 +289,8 @@ static int Win32UTCFileTime_AltStat(pTHX_ pMY_CXT_ const char *name,
      * (4) The file times in that structure are correct UTC times on both NTFS
      *     and FAT, whereas on FAT the file times in the WIN32_FIND_DATA
      *     structure are sometimes wrong w.r.t. DST season changes. */
-    if ((hndl = CreateFile(name, GENERIC_READ, FILE_SHARE_READ, NULL,
-            OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL)) ==
-            INVALID_HANDLE_VALUE)
+    if ((hndl = CreateFile(name, 0, 0, NULL, OPEN_EXISTING,
+            FILE_FLAG_BACKUP_SEMANTICS, NULL)) == INVALID_HANDLE_VALUE)
     {
         /* If this is a valid directory (presumably under a Windows 95 platform
          * on which the FILE_FLAG_BACKUP_SEMANTICS flag does not do the trick)
@@ -387,9 +386,8 @@ static BOOL Win32UTCFileTime_GetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
      * the Win32UTCFileTime_AltStat() function above.  (Do not use the more
      * obvious GetFileTime() to avoid a problem with that caching UTC time
      * values on FAT volumes.) */
-    if ((hndl = CreateFile(name, GENERIC_READ, FILE_SHARE_READ, NULL,
-            OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL)) ==
-            INVALID_HANDLE_VALUE)
+    if ((hndl = CreateFile(name, 0, 0, NULL, OPEN_EXISTING,
+            FILE_FLAG_BACKUP_SEMANTICS, NULL)) == INVALID_HANDLE_VALUE)
     {
         /* This function is only ever called after a call to Perl's built-in
          * stat() or lstat() function has already succeeded on the same name, so
