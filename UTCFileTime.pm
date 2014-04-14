@@ -1,9 +1,9 @@
 #-------------------------------------------------------------------------------
-# Copyright (c)	2003, Steve Hay. All rights reserved.
+# Copyright (c) 2003, Steve Hay. All rights reserved.
 #
-# Module Name:	Win32::UTCFileTime
-# Source File:	UTCFileTime.pm
-# Description:	Main Perl module
+# Module Name:  Win32::UTCFileTime
+# Source File:  UTCFileTime.pm
+# Description:  Main Perl module
 #-------------------------------------------------------------------------------
 
 package Win32::UTCFileTime;
@@ -24,79 +24,83 @@ sub utime(@);
 our @ISA = qw(Exporter);
 
 our @EXPORT = qw(
-	stat
-	lstat
-	utime
+    stat
+    lstat
+    utime
 );
 
 our @EXPORT_OK = qw(
+    alt_stat
 );
 
 our %EXPORT_TAGS = (
 );
 
-our $VERSION = '1.10';
+our $VERSION = '1.20';
 
 # Boolean debug setting.
 our $Debug = 0;
 
+# Control whether or not to try alt_stat() if CORE::stat() fails. (Boolean.)
+our $Try_Alt_Stat = 0;
+
 # Autoload the SEM_* flags from the constant() XS fuction.
 sub AUTOLOAD {
-	my(	$constant,						# Name of constant being autoloaded
-		$error,							# Error from constant autoload, if any
-		$value							# Value of constant being autoloaded
-		);
+    my( $constant,                      # Name of constant being autoloaded
+        $error,                         # Error from constant autoload, if any
+        $value                          # Value of constant being autoloaded
+        );
 
-	our($AUTOLOAD						# Fully-qualified name of method invoked
-		);
+    our($AUTOLOAD                       # Fully-qualified name of method invoked
+        );
 
-	# Get the name of the constant to generate a subroutine for.
-	($constant = $AUTOLOAD) =~ s/^.*:://;
+    # Get the name of the constant to generate a subroutine for.
+    ($constant = $AUTOLOAD) =~ s/^.*:://;
 
-	# Avoid deep recursion on AUTOLOAD() if constant() is not defined.
-	croak('Unexpected error in AUTOLOAD(): constant() is not defined')
-		if $constant eq 'constant';
+    # Avoid deep recursion on AUTOLOAD() if constant() is not defined.
+    croak('Unexpected error in AUTOLOAD(): constant() is not defined')
+        if $constant eq 'constant';
 
-	($error, $value) = constant($constant);
+    ($error, $value) = constant($constant);
 
-	# Handle any error from looking up the constant.
-	croak($error) if $error;
+    # Handle any error from looking up the constant.
+    croak($error) if $error;
 
-	# Generate an in-line subroutine returning the required value.
-	{
-		no strict 'refs';
-		*$AUTOLOAD = sub { return $value };
-	}
+    # Generate an in-line subroutine returning the required value.
+    {
+        no strict 'refs';
+        *$AUTOLOAD = sub { return $value };
+    }
 
-	# Switch to the subroutine that we have just generated.
-	goto &$AUTOLOAD;
+    # Switch to the subroutine that we have just generated.
+    goto &$AUTOLOAD;
 }
 
 XSLoader::load('Win32::UTCFileTime', $VERSION);
 
 # Specialised import() method to handle the special ':globally' pseudo-symbol.
 sub import {
-	my $i = 1;
-	while ($i < @_) {
-		# If the ':globally' pseudo-symbol is found in the list of symbols to
-		# export then remove it and export stat(), lstat() and utime() to the
-		# special CORE::GLOBAL package.
-		if ($_[$i] =~ /^:globally$/io) {
-			splice @_, $i, 1;
-			{
-				no warnings 'once';
-				*CORE::GLOBAL::stat  = \&Win32::UTCFileTime::stat;
-				*CORE::GLOBAL::lstat = \&Win32::UTCFileTime::lstat;
-				*CORE::GLOBAL::utime = \&Win32::UTCFileTime::utime;
-			}
-			next;
-		}
-		$i++;
-	}
+    my $i = 1;
+    while ($i < @_) {
+        # If the ':globally' pseudo-symbol is found in the list of symbols to
+        # export then remove it and export stat(), lstat() and utime() to the
+        # special CORE::GLOBAL package.
+        if ($_[$i] =~ /^:globally$/io) {
+            splice @_, $i, 1;
+            {
+                no warnings 'once';
+                *CORE::GLOBAL::stat  = \&Win32::UTCFileTime::stat;
+                *CORE::GLOBAL::lstat = \&Win32::UTCFileTime::lstat;
+                *CORE::GLOBAL::utime = \&Win32::UTCFileTime::utime;
+            }
+            next;
+        }
+        $i++;
+    }
 
-	# Switch to Exporter's import() method to handle any remaining symbols to
-	# export.
-	goto &Exporter::import;
+    # Switch to Exporter's import() method to handle any remaining symbols to
+    # export.
+    goto &Exporter::import;
 }
 
 #-------------------------------------------------------------------------------
@@ -105,95 +109,141 @@ sub import {
 #
 
 sub stat($) {
-	my(	$file							# File to stat()
-		) = @_;
+    my( $file                           # File to get status information for
+        ) = @_;
 
-	my(	$old_umode						# Old error mode
-		);
+    my( $old_umode                      # Old error mode
+        );
 
-	# Make sure we don't display a message box asking the user to insert a
-	# floppy disk or CD-ROM.
-	$old_umode = _set_error_mode(SEM_FAILCRITICALERRORS());
+    # Make sure we don't display a message box asking the user to insert a
+    # floppy disk or CD-ROM.
+    $old_umode = _set_error_mode(SEM_FAILCRITICALERRORS());
 
-	if (wantarray) {
-		my @stats = CORE::stat $file;
+    if (wantarray) {
+        my @stats = CORE::stat $file;
 
-		unless (@stats) {
-			_set_error_mode($old_umode);
-			return;
-		}
+        unless (@stats) {
+            _set_error_mode($old_umode);
+            warn("CORE::stat() failed for '$file'\n") if $Debug;
+            $Try_Alt_Stat ? goto &alt_stat : return;
+        }
 
-		unless (@stats[8 .. 10] = _get_utc_file_times($file)) {
-			_set_error_mode($old_umode);
-			return;
-		}
+        unless (@stats[8 .. 10] = _get_utc_file_times($file)) {
+            _set_error_mode($old_umode);
+            return;
+        }
 
-		_set_error_mode($old_umode);
-		return @stats;
-	}
-	else {
-		my $ret = CORE::stat $file;
+        _set_error_mode($old_umode);
+        return @stats;
+    }
+    else {
+        my $ret = CORE::stat $file;
 
-		_set_error_mode($old_umode);
-		return $ret;
-	}
+        unless ($ret) {
+            _set_error_mode($old_umode);
+            warn("CORE::stat() failed for '$file'\n") if $Debug;
+            $Try_Alt_Stat ? goto &alt_stat : return $ret;
+        }
+
+        _set_error_mode($old_umode);
+        return $ret;
+    }
 }
 
 sub lstat($) {
-	my(	$link							# Symbolic link to lstat()
-		) = @_;
+    my( $link                           # Symbolic link to get status info for
+        ) = @_;
 
-	my(	$old_umode						# Old error mode
-		);
+    my( $old_umode                      # Old error mode
+        );
 
-	# Make sure we don't display a message box asking the user to insert a
-	# floppy disk or CD-ROM.
-	$old_umode = _set_error_mode(SEM_FAILCRITICALERRORS());
+    # Make sure we don't display a message box asking the user to insert a
+    # floppy disk or CD-ROM.
+    $old_umode = _set_error_mode(SEM_FAILCRITICALERRORS());
 
-	if (wantarray) {
-		my @lstats = CORE::lstat $link;
+    if (wantarray) {
+        my @lstats = CORE::lstat $link;
 
-		unless (@lstats) {
-			_set_error_mode($old_umode);
-			return;
-		}
+        unless (@lstats) {
+            _set_error_mode($old_umode);
+            warn("CORE::lstat() failed for '$link'\n") if $Debug;
+            $Try_Alt_Stat ? goto &alt_stat : return;
+        }
 
-		unless (@lstats[8 .. 10] = _get_utc_file_times($link)) {
-			_set_error_mode($old_umode);
-			return;
-		}
+        unless (@lstats[8 .. 10] = _get_utc_file_times($link)) {
+            _set_error_mode($old_umode);
+            return;
+        }
 
-		_set_error_mode($old_umode);
-		return @lstats;
-	}
-	else {
-		my $ret = CORE::lstat $link;
+        _set_error_mode($old_umode);
+        return @lstats;
+    }
+    else {
+        my $ret = CORE::lstat $link;
 
-		_set_error_mode($old_umode);
-		return $ret;
-	}
+        unless ($ret) {
+            _set_error_mode($old_umode);
+            warn("CORE::lstat() failed for '$link'\n") if $Debug;
+            $Try_Alt_Stat ? goto &alt_stat : return $ret;
+        }
+
+        _set_error_mode($old_umode);
+        return $ret;
+    }
+}
+
+sub alt_stat($) {
+    my( $file                           # File to get status information for
+        ) = @_;
+
+    my( $old_umode                      # Old error mode
+        );
+
+    # Make sure we don't display a message box asking the user to insert a
+    # floppy disk or CD-ROM.
+    $old_umode = _set_error_mode(SEM_FAILCRITICALERRORS());
+
+    if (wantarray) {
+        my @stats = _alt_stat($file);
+
+        unless (@stats) {
+            _set_error_mode($old_umode);
+            warn("_alt_stat() failed for '$file'\n") if $Debug;
+            return;
+        }
+
+        _set_error_mode($old_umode);
+        return @stats;
+    }
+    else {
+        my $ret = _alt_stat($file);
+
+        _set_error_mode($old_umode);
+        warn("_alt_stat() failed for '$file'\n") if not $ret and $Debug;
+        return $ret;
+    }
 }
 
 sub utime(@) {
-	my(	$atime,							# Last access time to set
-		$mtime,							# Last modification time to set
-		@files							# Files to set times for
-		) = @_;
+    my( $atime,                         # Last access time to set
+        $mtime,                         # Last modification time to set
+        @files                          # Files to set times for
+        ) = @_;
 
-	my(	$time,							# Current time (default value)
-		$count							# Count of files successfully done
-		);
+    my( $time,                          # Current time (default value)
+        $count                          # Count of files successfully done
+        );
 
-	$time  = time;
-	$atime = $time unless defined $atime;
-	$mtime = $time unless defined $mtime;
+    $time  = time;
+    $atime = $time unless defined $atime;
+    $mtime = $time unless defined $mtime;
 
-	$count = 0;
-	foreach my $file (@files) {
-		_set_utc_file_times($file, $atime, $mtime) and $count++;
-	}
+    $count = 0;
+    foreach my $file (@files) {
+        _set_utc_file_times($file, $atime, $mtime) and $count++;
+    }
 
-	return $count;
+    return $count;
 }
 
 1;
@@ -211,15 +261,19 @@ Win32::UTCFileTime - Get/set UTC file times with stat/utime on Win32
 
 =head1 SYNOPSIS
 
-	# Override built-in stat()/lstat()/utime() within current package only:
-	use Win32::UTCFileTime;
-	@stats = stat $file or die "stat() failed: $^E\n";
-	$now = time;
-	utime $now, $now, $file;
+    # Override built-in stat()/lstat()/utime() within current package only:
+    use Win32::UTCFileTime;
+    @stats = stat $file or die "stat() failed: $^E\n";
+    $now = time;
+    utime $now, $now, $file;
 
-	# Or, override built-in stat()/lstat()/utime() within all packages:
-	use Win32::UTCFileTime qw(:globally);
-	...
+    # Or, override built-in stat()/lstat()/utime() within all packages:
+    use Win32::UTCFileTime qw(:globally);
+    ...
+
+    # Use an alternative implementation of stat() instead:
+    use Win32::UTCFileTime qw(alt_stat);
+    @stats = alt_stat($file) or die "alt_stat() failed: $^E\n";
 
 =head1 DESCRIPTION
 
@@ -306,6 +360,32 @@ in the lists thus obtained with the corrected values. In this way, all of the
 extra things done by Perl's built-in functions besides simply calling the
 underlying C C<stat(2)> function are inherited by this module.
 
+In obtaining these file time fields, these replacement function actually
+incorporate one slight improvement over the built-in function (as of Perl
+5.8.0): They work better on directories specified with trailing slashes or
+backslashes under Windows NT platforms.
+
+(As described in the L<"BACKGROUND REFERENCE"> section, the Microsoft C library
+C<stat(2)> function, and hence Perl's built-in C<stat()> function, calls the
+Win32 API function C<FindFirstFile()>. That function is documented to fail on
+directories specified with a trailing slash or backslash, hence the built-in
+function will not succeed. It fact, it falls back on another Win32 API function,
+C<GetFileAttributes()>, to set up the C<st_mode> field and then returns success
+in such cases, but leaving the other fields set to zero.
+
+The replacement functions also call C<FindFirstFile()> when calculating the
+correct UTC file times, but have a different fall-back function, namely
+C<CreateFile()>, if that fails. C<CreateFile()> can open directories specified
+with a trailing slash or backslash, but only under Windows NT platforms. The
+file time fields will thus be set correctly by these replacement functions on
+Windows NT platforms. (Under Windows 95 platforms, they are set to zero and the
+functions succeed, as per the Perl built-ins.) Note, however, that the other
+fields, left over from the original call to Perl's built-in C<stat()> or
+C<lstat()> function, will still be zero. For a complete alternative C<stat()>
+function that only uses C<CreateFile()>, and will thus set all fields correctly
+even for directories specified with a trailing slash or backslash, albeit only
+under Windows NT platforms, use the C<alt_stat()> function.)
+
 The replacement C<utime()> function provided by this module behaves identically
 to Perl's built-in function of the same name, except that:
 
@@ -348,19 +428,19 @@ failure.
 For convenience, here are the members of that 13-element list and their meanings
 on Win32:
 
-	 0  dev      drive number of the disk containing the file (same as rdev)
-	 1  ino      not meaningful on Win32; always returned as 0
-	 2  mode     file mode (type and permissions)
-	 3  nlink    number of (hard) links to the file; always 1 on Win32
-	 4  uid      numeric user ID of file's owner; always 0 on Win32
-	 5  gid      numeric group ID of file's owner; always 0 on Win32
-	 6  rdev     drive number of the disk containing the file (same as dev)
-	 7  size     total size of file, in bytes
-	 8  atime    last access time in seconds since the epoch
-	 9  mtime    last modification time in seconds since the epoch
-	10  ctime    creation time in seconds since the epoch
-	11  blksize  not implemented on Win32; returned as ''
-	12  blocks   not implemented on Win32; returned as ''
+     0  dev      drive number of the disk containing the file (same as rdev)
+     1  ino      not meaningful on Win32; always returned as 0
+     2  mode     file mode (type and permissions)
+     3  nlink    number of (hard) links to the file; always 1 on non-NTFS drives
+     4  uid      numeric user ID of file's owner; always 0 on Win32
+     5  gid      numeric group ID of file's owner; always 0 on Win32
+     6  rdev     drive number of the disk containing the file (same as dev)
+     7  size     total size of file, in bytes
+     8  atime    last access time in seconds since the epoch
+     9  mtime    last modification time in seconds since the epoch
+    10  ctime    creation time in seconds since the epoch
+    11  blksize  not implemented on Win32; returned as ''
+    12  blocks   not implemented on Win32; returned as ''
 
 where the epoch was at 00:00:00 Jan 01 1970 UTC and the drive number of the disk
 is 0 for F<A:>, 1 for F<B:>, 2 for F<C:> and so on.
@@ -372,8 +452,8 @@ according to the file's permission mode; the user execute bits are set according
 to the filename extension), you should mask off the file type portion and
 C<printf()> using a C<"%04o"> if you want to see the real permissions:
 
-	$mode = (stat($filename))[2];
-	printf "Permissions are %04o\n", $mode & 07777;
+    $mode = (stat($filename))[2];
+    printf "Permissions are %04o\n", $mode & 07777;
 
 You can also import symbolic mode constants (C<S_IF*>) and functions
 (C<S_IS*()>) from the Fcntl module to assist in examining the mode. See
@@ -390,6 +470,40 @@ In scalar context, returns a boolean value indicating success or failure.
 
 Gets the status information for the symbolic link I<$link>. This is the same as
 C<stat()> on Win32, which doesn't implement symbolic links.
+
+=item C<alt_stat($file)>
+
+Gets the status information for the file I<$file>.
+
+Behaves almost identically to C<stat()> above, but uses this module's own
+implementation of the standard C library C<stat(2)> function that can succeed in
+some cases where Microsoft's implementation fails.
+
+As mentioned in the main L<"DESCRIPTION"> above, Microsoft's C<stat(2)>, and
+hence Perl's built-in C<stat()> and the replacement C<stat()> function above,
+calls the Win32 API function C<FindFirstFile()>. That function is used to search
+a directory for a file, and thus requires the process to have "List Folder
+Contents" permission on the directory containing the I<$file> in question. If
+that permission is denied then C<stat()> will fail. It also has the disadvantage
+mentioned above that it will fail on directories specified with a trailing slash
+or backslash.
+
+C<alt_stat()> avoids both of these problems by using a different Win32 API
+function, C<CreatFile()>, instead. That function opens a file directly and hence
+doesn't require the process to have "List Folder Contents" permission on the
+parent directory. It can also open directories specified with trailing slash or
+backslash, but only under Windows NT platforms. B<In fact, under Windows 95
+platforms, it can't open directories at all and will only set the C<st_mode>
+field correctly.> The other fields are set to zero, like the Perl built-in
+C<stat()> and C<lstat()> functions do for directories specified with a trailing
+slash or backslash.
+
+The other disadvantage with using this function is that the entire
+C<struct stat> has to be built by hand by it, rather than simply inheriting most
+of it from the Microsoft C<stat(2)> call and then overwriting the file time
+fields. Thus, some of the fields, notably the C<st_mode> field which is somewhat
+ambiguous on Win32, may have different values to those that would have been set
+by the other C<stat()> functions.
 
 =item C<utime($atime, $mtime, @files)>
 
@@ -423,10 +537,25 @@ Debug mode setting.
 Boolean value.
 
 Setting this variable to a true value will cause debug information to be emitted
-(via a straight-forward C<print()> on STDERR) in the event of a failure
-revealing exactly what failed.
+(via C<warn()>, so that it can be captured with a I<$SIG{__WARN__}> handler if
+required) in the event of a failure revealing exactly what failed.
 
 The default value is 0, i.e. debug mode is "off".
+
+=item I<$Try_Alt_Stat>
+
+Control whether or not to try C<alt_stat()> if C<CORE::stat()> fails.
+
+Boolean value.
+
+As documented in the L<"DESCRIPTION"> section above, the replacement C<stat()>
+and C<lstat()> functions each call their built-in counterparts first and then
+overwrite the file time fields in the lists thus obtained with the corrected
+values. Setting this variable to a true value will cause the replacement
+functions to switch to C<alt_stat()> (via a C<goto &NAME> call) if the
+C<CORE::stat()> call fails.
+
+The default value is 0, i.e. the C<alt_stat()> function is not tried.
 
 =back
 
@@ -437,9 +566,9 @@ The default value is 0, i.e. debug mode is "off".
 The following diagnostic messages may be produced by this module. They are
 classified as follows (a la L<perldiag>):
 
-	(W) A warning (optional).
-	(F) A fatal error (trappable).
-	(I) An internal error that you should never see (trappable).
+    (W) A warning (optional).
+    (F) A fatal error (trappable).
+    (I) An internal error that you should never see (trappable).
 
 =over 4
 
@@ -450,21 +579,36 @@ C<TIME_ZONE_INFORMATION> stucture in which one or both of the transition dates
 between standard time and daylight time are given in "absolute" format rather
 than "day-in-month" format.
 
+=item Could not close file descriptor
+
+(W) The file descriptor opened by a call to the standard C library function
+C<open()> within C<utime()> could not be closed after use.
+
 =item Could not close file object handle
 
 (W) The file object handle opened by a call to the Win32 API function
-C<FindFirstFile()> within C<stat()> or C<lstat()> could not be closed after use.
+C<CreateFile()> within C<stat()>, C<lstat()>, C<alt_stat()> or C<utime()> could
+not be closed after use.
 
 =item Could not close file search handle
 
 (W) The file search handle opened by a call to the Win32 API function
-C<CreateFile()> within C<utime()> could not be closed after use.
+C<FindFirstFile()> within C<stat()> or C<lstat()> could not be closed after use.
 
 =item Could not convert base SYSTEMTIME to FILETIME
 
 (I) The Win32 API function C<SystemTimeToFileTime()> was unable to convert a
 C<SYSTEMTIME> representation of the epoch of C<time_t> values (namely, 00:00:00
 Jan 01 1970 UTC) to a C<FILETIME> representation.
+
+=item Could not determine operating system platform. Assuming the platform is
+Windows NT
+
+(W) The operating system platform (i.e. Win32s, Windows (95/98/ME), Windows NT
+or Windows CE) could not be determined. This information is used by the
+C<alt_stat()> function to decide whether or not a F<".cmd"> file extension
+represents an "executable file" when setting up the C<st_mode> field of the
+C<struct stat>. A Windows NT platform is assumed in this case.
 
 =item Could not determine name of filesystem. Assuming file times are stored as
 UTC-based values
@@ -478,6 +622,13 @@ values is assumed in this case.
 =item Could not get time zone information
 
 (F) The Win32 API function C<GetTimeZoneInformation()> failed.
+
+=item Overflow: Too many links (%lu) to file '%s'
+
+(W) The number of hard links to the specified file is greater than the largest
+C<short int>, and therefore cannot be assigned to the C<st_nlink> field of the
+C<struct stat> setup by C<alt_stat()>. The largest C<short int> itself is used
+instead in this case.
 
 =item The test date used in a date comparison is not in the required "absolute"
 format
@@ -602,13 +753,13 @@ times. This decision is documented in the Knowledge Base in articles Q128126 and
 Q158588. For most purposes, this behavior is innocuous, but as Microsoft writes
 in Q158588,
 
-	After the automatic correction for Daylight Savings Time, monitoring
-	programs comparing current time/date stamps to reference data that were not
-	written using Win32 API calls which directly obtain/adjust to Universal
-	Coordinated Time (UTC) will erroneously report time/date changes on files.
-	Programs affected by this issue may include version-control software,
-	database-synchronisation software, software-distribution packages, backup
-	software...
+    After the automatic correction for Daylight Savings Time, monitoring
+    programs comparing current time/date stamps to reference data that were not
+    written using Win32 API calls which directly obtain/adjust to Universal
+    Coordinated Time (UTC) will erroneously report time/date changes on files.
+    Programs affected by this issue may include version-control software,
+    database-synchronisation software, software-distribution packages, backup
+    software...
 
 This behavior is responsible for a flood of questions to the various support
 lists for CVS, following the first Sunday in April and the last Sunday in
@@ -629,44 +780,44 @@ F<A:> is a FAT-formatted floppy disk. You will need write access to F<C:\> and
 F<A:\>. This script will change your system time and date, so be prepared to
 manually restore them afterwards.
 
-	REM Test_DST_Bug.bat
-	REM File Modification Time Test
-	Date /T
-	Time /T
-	Date 10/27/2001
-	Time 10:00 AM
-	Echo Foo > A:\Foo.txt
-	Time 10:30 AM
-	Echo Foo > C:\Bar.txt
-	dir A:\Foo.txt C:\Bar.txt
-	Date 10/28/2001
-	dir A:\Foo.txt C:\Bar.txt
-	REM Prompt the user to reset the date and time.
-	date
-	time
+    REM Test_DST_Bug.bat
+    REM File Modification Time Test
+    Date /T
+    Time /T
+    Date 10/27/2001
+    Time 10:00 AM
+    Echo Foo > A:\Foo.txt
+    Time 10:30 AM
+    Echo Foo > C:\Bar.txt
+    dir A:\Foo.txt C:\Bar.txt
+    Date 10/28/2001
+    dir A:\Foo.txt C:\Bar.txt
+    REM Prompt the user to reset the date and time.
+    date
+    time
 
 The result looks something like this (abridged to save space)
 
-	C:\>Date 10/27/2001
-	C:\>dir A:\Foo.txt C:\Bar.txt
+    C:\>Date 10/27/2001
+    C:\>dir A:\Foo.txt C:\Bar.txt
 
-	  Directory of A:\
-	10/27/01  10:00a                     6 Foo.txt
-	  Directory of C:\
-	10/27/01  10:30a                     6 Bar.txt
+      Directory of A:\
+    10/27/01  10:00a                     6 Foo.txt
+      Directory of C:\
+    10/27/01  10:30a                     6 Bar.txt
 
-	C:\>Date 10/28/2001
-	C:\>dir A:\Foo.txt C:\Bar.txt
+    C:\>Date 10/28/2001
+    C:\>dir A:\Foo.txt C:\Bar.txt
 
-	  Directory of A:\
-	10/27/01  10:00a                     6 Foo.txt
-	  Directory of C:\
-	10/27/01  09:30a                     6 Bar.txt
+      Directory of A:\
+    10/27/01  10:00a                     6 Foo.txt
+      Directory of C:\
+    10/27/01  09:30a                     6 Bar.txt
 
 On 27 October, Windows correctly reports that F<Bar.txt> was modified half an
 hour after F<Foo.txt>, but the next day, Windows has changed its mind and
 decided that actually, F<Bar.txt> was modified half an hour B<before>
-F<Foo.txt>. A naïve programmer might think this was a bug, but as Microsoft
+F<Foo.txt>. A naive programmer might think this was a bug, but as Microsoft
 emphasised, B<this is how they want Windows to behave.>
 
 =head2 Why Windows has this problem
@@ -705,7 +856,7 @@ by the Royal Observatory in Greenwich, England and was ultimately referred to
 the position of the sun as measured by the observatory. When atomic clocks
 became the standard for timekeeping, a new standard, called UTC emerged. UTC is
 a bastard acronym. In English, it stands for "Coordinated Universal Time," while
-in French it stands for "le temps universel coordonné." Rather than using either
+in French it stands for "le temps universel coordonne." Rather than using either
 CUT or TUC, the nonsense compromise acronym UTC was adopted.
 
 To understand UTC, we must first understand the more abstract International
@@ -770,12 +921,12 @@ When translating local file times to UTC and vice-versa, Microsoft made a
 strange decision. We would like to have the following code procduce C<out_time>
 equal to C<in_time>
 
-	FILETIME in_time, local_time, out_time;
+    FILETIME in_time, local_time, out_time;
 
-	// Assign in_time, then do this...
+    // Assign in_time, then do this...
 
-	FileTimeToLocalFileTime(&in_time,    &local_time);
-	LocalFileTimeToFileTime(&local_time, &out_time  );
+    FileTimeToLocalFileTime(&in_time,    &local_time);
+    LocalFileTimeToFileTime(&local_time, &out_time  );
 
 The problem is that if the local time zone is US Central (UTC-6 hours for
 standard time, UTC-5 hours for daylight time) then C<in_time> = 06:30 Oct 28
@@ -796,26 +947,26 @@ allegedly returns the UTC modification time of a file. If you examine the source
 code for Microsoft's C library, you find that it gets the modification time
 thus:
 
-	// Pseudo-code listing
+    // Pseudo-code listing
 
-	WIN32_FIND_DATA find_buf;
-	HANDLE hFile;
-	FILETIME local_ft;
-	time_t mod_time;
+    WIN32_FIND_DATA find_buf;
+    HANDLE hFile;
+    FILETIME local_ft;
+    time_t mod_time;
 
-	// FindFirstFile() returns times in UTC.
-	// For NTFS files, it just returns the modification time stored on the disk.
-	// For FAT files, it converts the modification time from local (which is
-	// stored on the disk) to UTC using LocalFileTimeToFileTime().
-	hFile = FindFirstFile(file_name, &find_buf);
+    // FindFirstFile() returns times in UTC.
+    // For NTFS files, it just returns the modification time stored on the disk.
+    // For FAT files, it converts the modification time from local (which is
+    // stored on the disk) to UTC using LocalFileTimeToFileTime().
+    hFile = FindFirstFile(file_name, &find_buf);
 
-	// Convert UTC time to local time.
-	FileTimeToLocalFileTime(&find_buf.ftLastWriteTime, &local_ft);
+    // Convert UTC time to local time.
+    FileTimeToLocalFileTime(&find_buf.ftLastWriteTime, &local_ft);
 
-	// Now use a private, undocumented function to convert local time to UTC
-	// time according to the DST settings appropriate to the time being
-	// converted!
-	mod_time = __loctotime_t(local_ft);
+    // Now use a private, undocumented function to convert local time to UTC
+    // time according to the DST settings appropriate to the time being
+    // converted!
+    mod_time = __loctotime_t(local_ft);
 
 For a FAT file, the conversions work like this:
 
@@ -1045,20 +1196,20 @@ This is not the inverse of C<FileTimeToLocalFileTime()>.
 Microsoft's implementation of C<stat(2)>, as shown in the pseudo-code listing
 above, is basically:
 
-	FindFirstFile()	// calls LocalFileTimeToFileTime() on FAT
-	FileTimeToLocalFileTime()
-	__loctotime_t()
+    FindFirstFile() // calls LocalFileTimeToFileTime() on FAT
+    FileTimeToLocalFileTime()
+    __loctotime_t()
 
 The solution implemented in the library used by this module is essentially a
 combination of the L<"Solutions"> of the various cases outlined above, but using
 C<FindFirstFile()> rather than C<GetFileTime()> to avoid the caching problem
 under FAT and incorporating the use of C<GetTimeZoneInformation()>:
 
-	FindFirstFile()	// calls LocalFileTimeToFileTime() on FAT
-	if (IsFATVolume) {
-		FileTimeToLocalFileTime()
-		// Correctly convert local time to UTC using GetTimeZoneInformation()
-	}
+    FindFirstFile() // calls LocalFileTimeToFileTime() on FAT
+    if (IsFATVolume) {
+        FileTimeToLocalFileTime()
+        // Correctly convert local time to UTC using GetTimeZoneInformation()
+    }
 
 =head2 More problems: utime()
 
@@ -1073,9 +1224,9 @@ and last modification time through similar contortions to those in C<stat(2)>
 before storing them in the filesystem. In a nutshell, it goes something like the
 following:
 
-	localtime()
-	LocalFileTimeToFileTime()
-	SetFileTime()	// calls FileTimeToLocalFileTime() on FAT
+    localtime()
+    LocalFileTimeToFileTime()
+    SetFileTime()   // calls FileTimeToLocalFileTime() on FAT
 
 For a FAT file, the conversions work like this:
 
@@ -1140,11 +1291,11 @@ to the C<stat(2)> mess: do the conversions "correctly", and arrange for the
 function involved (in this case, C<SetFileTime()>) under FAT to be cancelled
 out:
 
-	if (IsFATVolume) {
-		// Correctly convert UTC to local time using GetTimeZoneInformation()
-		LocalFileTimeToFileTime()
-	}
-	SetFileTime()	// calls FileTimeToLocalFileTime() on FAT
+    if (IsFATVolume) {
+        // Correctly convert UTC to local time using GetTimeZoneInformation()
+        LocalFileTimeToFileTime()
+    }
+    SetFileTime()   // calls FileTimeToLocalFileTime() on FAT
 
 =head1 EXPORTS
 
@@ -1160,6 +1311,7 @@ C<utime>.
 
 =item Optional Exports
 
+C<alt_stat>,
 C<:globally>.
 
 =item Export Tags
@@ -1190,7 +1342,7 @@ I<None>.
 
 =back
 
-=head1 BUGS AND CAVEATS
+=head1 KNOWN BUGS AND CAVEATS
 
 =over 4
 
@@ -1231,14 +1383,14 @@ if the transition dates are returned in "absolute" format.
 =item *
 
 The code that determines what filesystem a given path is on doesn't currently
-handle I<volume mount points> that are supported by by NTFS 5.0 (Windows 2000)
-and later. A volume mount point is a directory on one volume in which a
-different volume is mounted. For example, it is possible to mount the F<D:>
-drive in the directory F<C:\mnt\d-drive> and thereafter refer to files on the
-F<D:> drive as being in the F<C:\mnt\d-drive> directory.
+handle I<volume mount points> that are supported by NTFS 5.0 (Windows 2000) and
+later. A volume mount point is a directory on one volume in which a different
+volume is mounted. For example, it is possible to mount the F<D:> drive in the
+directory F<C:\mnt\d-drive> and thereafter refer to files on the F<D:> drive as
+being in the F<C:\mnt\d-drive> directory.
 
 The code will presently determine the filesystem of paths in that location
-according to the filesystem of the F<C:> drive, but that may not be correct: the
+according to the filesystem of the F<C:> drive, but that may not be correct: The
 F<D:> drive could be a different filesystem. Instead, the code should retrieve
 the volume mount point (in this case, F<C:\mnt\d-drive>) using
 C<GetVolumePathName()>, then get the name of the corresponding volume (in this
@@ -1248,10 +1400,23 @@ the filesystem from that (using C<GetVolumeInformation()> as it currently does).
 Such an improvement will need to contend with the fact that
 C<GetVolumePathName()> and C<GetVolumeNameForVolumeMountPoint()> are only
 supported on Windows 2000 and later, and require the C<_WIN32_WINNT> macro to be
-defined as 0x0500 or later, but we would, of course, not want to remove
-backwards compatibility with earlier OS's.
+defined as 0x0500 or later when building, but we would, of course, not want to
+remove backwards compatibility with earlier OS's.
 
 =back
+
+=head1 FEEDBACK
+
+Patches, bug reports, suggestions and any other feedback are welcome.
+
+Bugs can be reported on the CPAN Request Tracker at
+F<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Win32-UTCFileTime>.
+
+Open bugs on the CPAN Request Tracker can be viewed at
+F<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Win32-UTCFileTime>.
+
+Please rate this distribution on CPAN Ratings at
+F<http://cpanratings.perl.org/rate/?distribution=Win32-UTCFileTime>.
 
 =head1 SEE ALSO
 
@@ -1265,18 +1430,30 @@ L<Win32::FileTime>.
 =head1 ACKNOWLEDGEMENTS
 
 Many thanks to Jonathan M Gilligan E<lt>jonathan.gilligan@vanderbilt.eduE<gt>
-and Tony M Hoyle E<lt>tmh@nodomain.orgE<gt> who wrote the C code that this
-module is based on and granted permission to use it under the terms of the Perl
-Artistic License as well as the GNU GPL. Extras thanks to Jonathan for also
+and Tony M Hoyle E<lt>tmh@nodomain.orgE<gt> who wrote much of the C code that
+this module is based on and granted permission to use it under the terms of the
+Perl Artistic License as well as the GNU GPL. Extras thanks to Jonathan for also
 granting permission to use his article describing the problem and his solution
 to it in the L<"BACKGROUND REFERENCE"> section of this manpage.
 
 Credit is also due to Slaven Rezic for finding Jonathan's work on the Code
 Project website (F<http://www.codeproject.com>) in response to my bug report
-(ticket #18513 on the Perl Bugs website, F<http://www.bugs.perl.org>).
+(ticket #18513 on the Perl Bugs website, F<http://bugs.perl.org>).
 
-The custom import() method is based on that in the standard library module
+The custom C<import()> method is based on that in the standard library module
 File::Glob (version 1.01).
+
+The C<alt_stat()> function is based on code in CVSNT's C<wnt_stat()> function
+and Perl's C<win32_stat()> and C<pp_stat()> functions.
+
+=head1 AVAILABILITY
+
+The latest version of this module is available from CPAN (see
+L<perlmodlib/"CPAN"> for details) at
+
+F<http://www.cpan.org/authors/id/S/SH/SHAY/> or
+
+F<http://www.cpan.org/modules/by-module/Win32/>.
 
 =head1 AUTHOR
 
@@ -1295,12 +1472,12 @@ the same terms as Perl itself.
 
 =head1 VERSION
 
-Win32::UTCFileTime, Version 1.10
+Win32::UTCFileTime, Version 1.20
 
 =head1 HISTORY
 
 See the file F<Changes> in the original distribution archive,
-F<Win32-UTCFileTime-1.10.tar.gz>.
+F<Win32-UTCFileTime-1.20.tar.gz>.
 
 =cut
 

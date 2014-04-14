@@ -3,21 +3,63 @@ ________________________________________________________________________________
 Revision history for Perl extension Win32::UTCFileTime.
 _________________
 
+v1.20 24 Sep 2003
+
+    - Introduced an alternative C stat(2) function from CVSNT and Perl code that
+      can succeed in some cases where Microsoft's implementation fails. A Perl
+      interface, alt_stat(), is optionally exported, and can be automatically
+      tried by the replacement stat() and lstat() functions if the built-in
+      functions that they call first fail.
+
+    - Changed the replacement utime()'s use of Perl's trick for making it work
+      on directories too. The trick only works under Windows NT platforms, so it
+      is more appropriate to try a more natural approach first and only fall
+      back on the trick if that fails. This is the approach that Perl uses too.
+
+    - Improved the replacement stat() and lstat() functions by having them fall
+      back on CreateFile() if FindFirstFile() fails when getting the correct UTC
+      file times. The file times can now be retrieved under Windows NT platforms
+      for root (drive or UNC) directories, and for directories specified with a
+      trailing slash or backslash.
+
+    - Improved the detection of the filesystem when determining whether or not
+      it stores UTC file times.
+
+    - Cached the conversion of the base SYSTEMTIME to FILETIME for a minor
+      speed-up.
+
+    - Changed the output of debug information to use warn() rather than simply
+      print()'ing to STDERR to enable the information to be captured by a
+      $SIG{__WARN__} handler if required.
+
+    - Added new test programs to exercise the new and improved features.
+
+    - Renamed some functions in the XS and C code.
+
+    - Reverted the typemap for "const char *" back to the default T_PV. There
+      didn't seem to be any point in the custom typemap.
+
+    - Changed tabs to spaces (via "expand -t 4 infile > outfile") to avoid
+      irritation when switching between editors that use 4- or 8-space tabs.
+
+    - Added META.yml (courtesy of ExtUtils::MakeMaker 6.17).
+_________________
+
 v1.10 23 Jun 2003
 
-	- Incorporated improvements to the underlying C code from CVSNT code. The
-	  DST season transition dates are now correctly calculated (assuming that
-	  they are not determined by year-specific clues), rather than assuming the
-	  United States' rule applies.
+    - Incorporated improvements to the underlying C code from CVSNT code. The
+      DST season transition dates are now correctly calculated (assuming that
+      they are not determined by year-specific clues), rather than assuming the
+      United States' rule applies.
 _________________
 
 v1.00 05 Jun 2003
 
-	- First released version.
+    - First released version.
 _________________
 
 v0.01 20 May 2003
 
-	- Original version; created by h2xs 1.22 with options:
-	  -n Win32::UTCFileTime -b 5.6.0
+    - Original version; created by h2xs 1.22 with options:
+      -n Win32::UTCFileTime -b 5.6.0
 ________________________________________________________________________________
