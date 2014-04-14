@@ -47,16 +47,18 @@ BEGIN {
     );
     
     @EXPORT_OK = qw(
+        $ErrStr
         alt_stat
     );
     
-    $VERSION = '1.33';
+    $VERSION = '1.40';
 }
 
-# Boolean debug setting.
-our $Debug = 0;
+# Last error message.
+our $ErrStr = '';
 
-# Control whether or not to try alt_stat() if CORE::stat() fails.  (Boolean.)
+# Control whether or not to try alt_stat() if CORE::stat() or CORE::lstat()
+# fails.  (Boolean.)
 our $Try_Alt_Stat = 0;
 
 XSLoader::load(__PACKAGE__, $VERSION);
@@ -66,6 +68,7 @@ XSLoader::load(__PACKAGE__, $VERSION);
 #===============================================================================
 
 # Autoload the SEM_* flags from the constant() XS fuction.
+
 sub AUTOLOAD {
     our $AUTOLOAD;
 
@@ -92,6 +95,9 @@ sub AUTOLOAD {
 }
 
 # Specialised import() method to handle the ':globally' pseudo-symbol.
+# This method is based on the import() method in the standard library module
+# File::Glob (version 1.01).
+
 sub import {
     my $i = 1;
     while ($i < @_) {
@@ -119,6 +125,8 @@ sub import {
 sub stat(;$) {
     my $file = @_ ? shift : $_;
 
+    $ErrStr = '';
+
     # Make sure we don't display a message box asking the user to insert a
     # floppy disk or CD-ROM.
     my $old_umode = _set_error_mode(SEM_FAILCRITICALERRORS());
@@ -127,9 +135,14 @@ sub stat(;$) {
         my @stats = CORE::stat $file;
 
         unless (@stats) {
-            warn("Can't stat file '$file': $!") if $Debug;
             _set_error_mode($old_umode);
-            $Try_Alt_Stat ? goto &alt_stat : return;
+            if ($Try_Alt_Stat) {
+                goto &alt_stat;
+            }
+            else {
+                $ErrStr = "Can't stat file '$file': $!";
+                return;
+            }
         }
 
         unless (@stats[8 .. 10] = _get_utc_file_times($file)) {
@@ -144,9 +157,14 @@ sub stat(;$) {
         my $ret = CORE::stat $file;
 
         unless ($ret) {
-            warn("Can't stat file '$file': $!") if $Debug;
             _set_error_mode($old_umode);
-            $Try_Alt_Stat ? goto &alt_stat : return $ret;
+            if ($Try_Alt_Stat) {
+                goto &alt_stat;
+            }
+            else {
+                $ErrStr = "Can't stat file '$file': $!";
+                return $ret;
+            }
         }
 
         _set_error_mode($old_umode);
@@ -157,6 +175,8 @@ sub stat(;$) {
 sub lstat(;$) {
     my $link = @_ ? shift : $_;
 
+    $ErrStr = '';
+
     # Make sure we don't display a message box asking the user to insert a
     # floppy disk or CD-ROM.
     my $old_umode = _set_error_mode(SEM_FAILCRITICALERRORS());
@@ -165,9 +185,14 @@ sub lstat(;$) {
         my @lstats = CORE::lstat $link;
 
         unless (@lstats) {
-            warn("Can't stat link '$link': $!") if $Debug;
             _set_error_mode($old_umode);
-            $Try_Alt_Stat ? goto &alt_stat : return;
+            if ($Try_Alt_Stat) {
+                goto &alt_stat;
+            }
+            else {
+                $ErrStr = "Can't stat link '$link': $!";
+                return;
+            }
         }
 
         unless (@lstats[8 .. 10] = _get_utc_file_times($link)) {
@@ -182,9 +207,14 @@ sub lstat(;$) {
         my $ret = CORE::lstat $link;
 
         unless ($ret) {
-            warn("Can't stat link '$link': $!") if $Debug;
             _set_error_mode($old_umode);
-            $Try_Alt_Stat ? goto &alt_stat : return $ret;
+            if ($Try_Alt_Stat) {
+                goto &alt_stat;
+            }
+            else {
+                $ErrStr = "Can't stat link '$link': $!";
+                return $ret;
+            }
         }
 
         _set_error_mode($old_umode);
@@ -194,6 +224,8 @@ sub lstat(;$) {
 
 sub alt_stat(;$) {
     my $file = @_ ? shift : $_;
+
+    $ErrStr = '';
 
     # Make sure we don't display a message box asking the user to insert a
     # floppy disk or CD-ROM.
@@ -215,6 +247,8 @@ sub alt_stat(;$) {
 
 sub utime(@) {
     my($atime, $mtime, @files) = @_;
+
+    $ErrStr = '';
 
     my $time = time;
 
@@ -244,8 +278,8 @@ Win32::UTCFileTime - Get/set UTC file times with stat/utime on Win32
 =head1 SYNOPSIS
 
     # Override built-in stat()/lstat()/utime() within current package only:
-    use Win32::UTCFileTime;
-    @stats = stat $file or die "stat() failed: $^E\n";
+    use Win32::UTCFileTime qw(:DEFAULT $ErrStr);
+    @stats = stat $file or die "stat() failed: $ErrStr\n";
     $now = time;
     utime $now, $now, $file;
 
@@ -254,8 +288,8 @@ Win32::UTCFileTime - Get/set UTC file times with stat/utime on Win32
     ...
 
     # Use an alternative implementation of stat() instead:
-    use Win32::UTCFileTime qw(alt_stat);
-    @stats = alt_stat($file) or die "alt_stat() failed: $^E\n";
+    use Win32::UTCFileTime qw(alt_stat $ErrStr);
+    @stats = alt_stat($file) or die "alt_stat() failed: $ErrStr\n";
 
 =head1 DESCRIPTION
 
@@ -386,10 +420,11 @@ simply calling the underlying C C<utime(2)> function (namely, providing a fix so
 that it works on directories as well as files) is also incorporated into this
 module's replacement function.
 
-All three functions are exported to the caller's package by default.  A special
-C<:globally> export pseudo-symbol is also provided that will export all three
-functions to the CORE::GLOBAL package, which effectively overrides the Perl
-built-in functions in I<all> packages, not just the caller's.
+All three replacement functions are exported to the caller's package by default.
+A special C<:globally> export pseudo-symbol is also provided that will export
+all three functions to the CORE::GLOBAL package, which effectively overrides the
+Perl built-in functions in I<all> packages, not just the caller's.  The
+C<alt_stat()> function is only exported when explicitly requested.
 
 =head2 Functions
 
@@ -401,8 +436,7 @@ Gets the status information for the file I<$file>.  If I<$file> is omitted then
 C<$_> is used instead.
 
 In list context, returns the same 13-element list as Perl's built-in C<stat()>
-function on success, or returns an empty list and sets C<$!> and/or C<$^E> on
-failure.
+function on success, or returns an empty list and sets I<$ErrStr> on failure.
 
 For convenience, here are the members of that 13-element list and their meanings
 on Win32:
@@ -443,7 +477,8 @@ Note that you cannot use this module in conjunction with the File::stat module
 13-element list) because both modules operate by overriding Perl's built-in
 C<stat()> function.  Only the second override to be applied would have effect.
 
-In scalar context, returns a boolean value indicating success or failure.
+In scalar context, returns a boolean value indicating success or failure (and
+sets I<$ErrStr> on failure).
 
 =item C<lstat([$link])>
 
@@ -493,7 +528,8 @@ I<$atime> and I<$mtime> respectively for each of the files in I<@files>.  The
 process must have write access to each of the files concerned in order to change
 these file times.
 
-Returns the number of files successfully changed.
+Returns the number of files successfully changed and sets I<$ErrStr> if one or
+more files could not be changed.
 
 The times should both be specified as the number of seconds since the epoch,
 where the epoch was at 00:00:00 Jan 01 1970 UTC.  If the undefined value is used
@@ -511,17 +547,20 @@ other operating systems.
 
 =over 4
 
-=item I<$Debug>
+=item I<$ErrStr>
 
-Debug mode setting.
+Last error message.
 
-Boolean value.
+If any function fails then a description of the last error will be set in this
+variable for use in reporting the cause of the failure, much like the use of the
+Perl Special Variables C<$!> and C<$^E> after failed system calls and Win32 API
+calls.  Note that C<$!> and/or C<$^E> may also be set on failure, but this is
+not always the case so it is better to check I<$ErrStr> instead.  Any relevant
+messages from C<$!> or C<$^E> will form part of the message in I<$ErrStr>
+anyway.  See L<"Error Values"> for a listing of the possible values of
+I<$ErrStr>.
 
-Setting this variable to a true value will cause debug information to be emitted
-(via C<warn()>, so that it can be captured with a I<$SIG{__WARN__}> handler if
-required) in the event of a failure revealing exactly what failed.
-
-The default value is 0, i.e. debug mode is "off".
+If a function succeeds then this variable will be set to the null string.
 
 =item I<$Try_Alt_Stat>
 
@@ -556,42 +595,35 @@ classified as follows (a la L<perldiag>):
 
 =item Can't close file descriptor '%d' for file '%s': %s
 
-(W) The specified file descriptor for the specified file opened by a call to the
-standard C library function C<open(2)> within C<utime()> could not be closed
+(W) The specified file descriptor for the specified file could not be closed
 after failing to obtain the associated operating-system file handle from it.
+The system error message corresponding to the standard C library C<errno>
+variable is also given.
 
 =item Can't close file object handle '%lu' for file '%s' after reading: %s
 
-(W) The specified file object handle for the specified file opened by a call to
-the Win32 API function C<CreateFile()> within C<stat()>, C<lstat()> or
-C<alt_stat()> could not be closed after reading file information from it.
+(W) The specified file object handle for the specified file could not be closed
+after reading file information from it.  The system error message corresponding
+to the Win32 API last error code is also given.
 
 =item Can't close file object handle '%lu' for file '%s' after updating: %s
 
-(W) The specified file object handle for the specified file opened by a call to
-the Win32 API function C<CreateFile()> or C<_get_osfhandle()> within C<utime()>
-could not be closed after updating the file times using it.
+(W) The specified file object handle for the specified file could not be closed
+after updating the file times using it.  The system error message corresponding
+to the Win32 API last error code is also given.
 
 =item Can't close file search handle '%lu' for file '%s' after reading: %s
 
-(W) The specified file search handle for the specified file opened by a call to
-the Win32 API function C<FindFirstFile()> within C<stat()> or C<lstat()> could
-not be closed after reading file information from it.
+(W) The specified file search handle for the specified file could not be closed
+after reading file information from it.  The system error message corresponding
+to the Win32 API last error code is also given.
 
 =item Can't convert base SYSTEMTIME to FILETIME: %s
 
-(I) The Win32 API function C<SystemTimeToFileTime()> was unable to convert a
-C<SYSTEMTIME> representation of the epoch of C<time_t> values (namely, 00:00:00
-Jan 01 1970 UTC) to a C<FILETIME> representation.
-
-=item Can't determine operating system platform: %s.  Assuming the platform is
-Windows NT
-
-(W) The operating system platform (i.e. Win32s, Windows (95/98/ME), Windows NT
-or Windows CE) could not be determined.  This information is used by the
-C<alt_stat()> function to decide whether or not a F<".cmd"> file extension
-represents an "executable file" when setting up the C<st_mode> field of the
-C<struct stat>.  A Windows NT platform is assumed in this case.
+(I) The C<SYSTEMTIME> representation of the epoch of C<time_t> values (namely,
+00:00:00 Jan 01 1970 UTC) could not be converted to its C<FILETIME>
+representation.  The system error message corresponding to the Win32 API last
+error code is also given.
 
 =item Can't determine name of filesystem: %s.  Assuming file times are stored as
 UTC-based values
@@ -600,23 +632,37 @@ UTC-based values
 determined.  This information is required because different filesystems store
 file times in different formats (in particular, NTFS stores UTC-based values,
 whereas FAT stores local time-based value).  A filesystem that stores UTC-based
-values is assumed in this case.
+values is assumed in this case.  The system error message corresponding to the
+Win32 API last error code is also given.
+
+=item Can't determine operating system platform: %s.  Assuming the platform is
+Windows NT
+
+(W) The operating system platform (i.e. Win32s, Windows (95/98/ME), Windows NT
+or Windows CE) could not be determined.  This information is used by the
+C<alt_stat()> function to decide whether or not a F<".cmd"> file extension
+represents an "executable file" when setting up the C<st_mode> field of the
+C<struct stat>.  A Windows NT platform is assumed in this case.  The system
+error message corresponding to the Win32 API last error code is also given.
 
 =item Can't get time zone information: %s
 
-(F) The Win32 API function C<GetTimeZoneInformation()> failed.
+(F) The current time zone parameters controlling the translations between UTC
+and local time could not be retrieved.  The system error message corresponding
+to the Win32 API last error code is also given.
 
 =item Can't handle year-specific DST clues in time zone information
 
-(F) The Win32 API function C<GetTimeZoneInformation()> returned a
-C<TIME_ZONE_INFORMATION> stucture in which one or both of the transition dates
-between standard time and daylight time are given in "absolute" format rather
-than "day-in-month" format.
+(F) The current time zone parameters controlling the translations between UTC
+and local time are represented as a C<TIME_ZONE_INFORMATION> stucture in which
+one or both of the transition dates between standard time and daylight time are
+given in "absolute" format rather than "day-in-month" format.  Transition dates
+in this format are not currently supported by this module.
 
 =item %s is not a valid Win32::UTCFileTime macro
 
 (F) You attempted to lookup the value of the specified constant in the
-Win32::UTCFileTime module, but that constant is unknown to that module.
+Win32::UTCFileTime module, but that constant is unknown to this module.
 
 =item Overflow: Too many links (%lu) to file '%s'
 
@@ -659,9 +705,60 @@ Win32::UTCFileTime module, but that constant is apparently not defined.
 
 =head2 Error Values
 
-All three functions set the Perl Special Variables C<$!> and/or C<$^E> to values
-indicating the cause of the error when they fail.  The possible values of each
-are as follows (C<$!> shown first, C<$^E> underneath):
+Each function sets I<$ErrStr> to a value indicating the cause of the error when
+they fail.  The possible values are as follows:
+
+=over 4
+
+=item Can't convert FILETIME to SYSTEMTIME: %s
+
+The C<FILETIME> representation of a time could not be converted to its
+C<SYSTEMTIME> representation.  The system error message corresponding to the
+Win32 API last error code is also given.
+
+=item Can't get file information for file '%s': %s
+
+File information could not be read from an open file handle on the specified
+file.  The system error message corresponding to the Win32 API last error code
+is also given.
+
+=item Can't open file '%s' for reading: %s
+
+The specified file could not be opened for reading file information from.  The
+system error message corresponding to the Win32 API last error code is also
+given.
+
+=item Can't open file '%s' for updating: %s
+
+The specified file could not be opened for updating the file times.  The system
+error message corresponding to the Win32 API last error code is also given.
+
+=item Can't set file times for file '%s': %s
+
+The file times could not be updated on an open file handle on the specified
+file.  The system error message corresponding to the Win32 API last error code
+is also given.
+
+=item Can't stat %s '%s': %s
+
+The C<CORE::stat()> or C<CORE::lstat()> function failed for the specified file
+or link.  (The replacement C<stat()> and C<lstat()> functions call their CORE
+counterparts prior to getting the "correct" UTC file times.)  The system error
+message corresponding to the standard C library C<errno> variable is also given.
+
+=item Wildcard in filename '%s'
+
+The specified filename passed to the C<alt_stat()> function contains a DOS-style
+wildcard character, namely "?" or "*".  The function is not able to handle
+filenames of this format.
+
+=back
+
+In some cases, the functions may also leave the Perl Special Variables C<$!>
+and/or C<$^E> set to values indicating the cause of the error when they fail;
+one or the other of these will be incorporated into the I<$ErrStr> message in
+such cases, as indicated above.  The possible values of each are as follows
+(C<$!> shown first, C<$^E> underneath):
 
 =over 4
 
@@ -670,16 +767,14 @@ are as follows (C<$!> shown first, C<$^E> underneath):
 =item ERROR_ACCESS_DENIED (Access is denied)
 
 [C<utime()> only.]  One or more of the I<@files> is read-only.  (The process
-must have write access to each file to be able to change its last access time or
-last modification time.)
+must have write access to each file to be able to update its file times.)
 
 =item EMFILE (Too many open files)
 
 =item ERROR_TOO_MANY_OPEN_FILES (The system cannot open the file)
 
-[C<utime()> only.]  The maximum number of file descriptors has been reached.
-(Each file must be opened in turn to change its last access time or last
-modification time.)
+The maximum number of file descriptors has been reached.  (Each file must be
+opened in order to read file information from it or to update its file times.)
 
 =item ENOENT (No such file or directory)
 
@@ -689,9 +784,9 @@ The filename or path in I<$file> was not found.
 
 =back
 
-Note that since all three functions use Win32 API functions rather than standard
-C library functions, they will probably only set C<$^E> (which represents the
-Win32 API last error value, as returned by C<GetLastError()>), not C<$!> (which
+Note that since each function uses Win32 API functions rather than standard C
+library functions, they will probably only set C<$^E> (which represents the
+Win32 API last error code, as returned by C<GetLastError()>), not C<$!> (which
 represents the standard C library C<errno> variable).
 
 Other values may also be produced by various functions that are used within this
@@ -739,13 +834,13 @@ available for Visual Studio 6.0.)
 
 An excellent overview of the problem with Microsoft's C<stat(2)> was written by
 Jonathan M Gilligan and posted on the Code Project website
-(F<http://www.codeproject.com>).  He has kindly granted permission to use his
+(F<http://www.codeproject.com/>).  He has kindly granted permission to use his
 article here to describe the problem more fully.  A slightly edited version of
 it now follows; the original article can be found at the URL
 F<http://www.codeproject.com/datetime/dstbugs.asp>.
 
 (The article was accompanied by a C library, adapted from code written for CVSNT
-(F<http://www.cvsnt.org>) by Jonathan and Tony M Hoyle, which implemented the
+(F<http://www.cvsnt.org/>) by Jonathan and Tony M Hoyle, which implemented the
 solution outlined at the end of his article.  The solution provided by this
 module is based on that library and the original CVSNT code itself (version
 2.0.4), which both authors kindly granted permission to use under the terms of
@@ -1328,6 +1423,7 @@ C<utime>.
 =item Optional Exports
 
 C<alt_stat>,
+C<$ErrStr>,
 C<:globally>.
 
 =item Export Tags
@@ -1448,19 +1544,23 @@ L<Win32::FileTime>.
 Many thanks to Jonathan M Gilligan E<lt>jonathan.gilligan@vanderbilt.eduE<gt>
 and Tony M Hoyle E<lt>tmh@nodomain.orgE<gt> who wrote much of the C code that
 this module is based on and granted permission to use it under the terms of the
-Perl Artistic License as well as the GNU GPL.  Extras thanks to Jonathan for
-also granting permission to use his article describing the problem and his
-solution to it in the L<"BACKGROUND REFERENCE"> section of this manpage.
+Perl Artistic License as well as the GNU GPL.  Extra thanks to Jonathan for also
+granting permission to use his article describing the problem and his solution
+to it in the L<"BACKGROUND REFERENCE"> section of this manpage.
 
 Credit is also due to Slaven Rezic for finding Jonathan's work on the Code
-Project website (F<http://www.codeproject.com>) in response to my bug report
-(ticket #18513 on the Perl Bugs website, F<http://bugs.perl.org>).
+Project website (F<http://www.codeproject.com/>) in response to my bug report
+(ticket #18513 on the Perl Bugs website, F<http://bugs.perl.org/>).
 
 The custom C<import()> method is based on that in the standard library module
 File::Glob (version 1.01), written by Nathan Torkington and others.
 
-The C<alt_stat()> function is based on code in CVSNT's C<wnt_stat()> function
-and Perl's C<win32_stat()> and C<pp_stat()> functions.
+The C<alt_stat()> function is based on code taken from the C<wnt_stat()>
+function in CVSNT (version 2.0.4) and the C<win32_stat()> and C<pp_stat()>
+functions in Perl (version 5.8.0).
+
+The C<_StrWinError()> function used by the XS code is based on the
+C<win32_str_os_error()> function in Perl (version 5.8.5).
 
 =head1 AVAILABILITY
 
@@ -1495,11 +1595,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Win32::UTCFileTime, Version 1.33
+Version 1.40
 
 =head1 DATE
 
-08 Aug 2004
+31 Oct 2004
 
 =head1 HISTORY
 

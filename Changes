@@ -1,9 +1,44 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.33
+                        Win32::UTCFileTime, Version 1.40
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.40 31 Oct 2004
+
+    - Removed $Debug variable and introduced new $ErrStr variable.
+
+      Instead of callers having no clue as to why a function failed unless an
+      error happens to be in $! and/or $^E or they had $Debug set to a true
+      value, they can now inspect the $ErrStr variable to obtain the reason for
+      the failure, much like the use of $! and $^E themselves, except that
+      $ErrStr will always be set when a function fails, even if the last error
+      did not relate to a system call or Win32 API call.
+
+      Note that $! and/or $^E will continue to be set as well wherever they were
+      previously being set, so existing code that inspects those variables will
+      not be affected.  Callers should simply consider inspecting $ErrStr
+      instead in the future.
+
+      The only backwards compatibility issue here is the removal of the $Debug
+      variable, which is unlikely to affect most production systems.
+
+    - Updated documentation and tests for these changes.
+
+    - Renamed some functions, macros and external variables in the XS and C code
+      to use names that are more likely to be unique to this code, namely
+      Win32UTCFileTime_*() for functions, WIN32_UTCFILETIME_* for macros and
+      win32_utcfiletime_* for external variables.
+
+    - Introduced use of *MY_CXT* macros etc for handling static data in the C
+      code to make the module thread-safe.
+
+    - Reinstated ppport.h to provide *MY_CXT* macros etc for Perls older than
+      5.7.3 (or 5.9.2 in the case of MY_CXT_CLONE).
+
+    - Updated Module::Install components from version 0.36 of that distribution.
 _________________
 
 v1.33 08 Aug 2004
@@ -85,7 +120,7 @@ v1.30 22 Feb 2004
     - Changed stat(), lstat() and alt_stat() to use $_ if no argument is given,
       as per the Perl built-in functions.
 
-    - Added new test program to exercise this new feature.
+    - Added new test script to exercise this new feature.
 
     - Clarified licence and warranty for the module, and included relevant
       licence files in the distribution.
@@ -144,7 +179,7 @@ v1.20 24 Sep 2003
       print()'ing to STDERR to enable the information to be captured by a
       $SIG{__WARN__} handler if required.
 
-    - Added new test programs to exercise the new and improved features.
+    - Added new test scripts to exercise the new and improved features.
 
     - Renamed some functions in the XS and C code.
 

@@ -4,7 +4,7 @@
 # t/10_pod.t
 #
 # DESCRIPTION
-#   Test program to check POD.
+#   Test script to check POD.
 #
 # COPYRIGHT
 #   Copyright (c) 2004, Steve Hay.  All rights reserved.

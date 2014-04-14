@@ -4,7 +4,7 @@
 # t/04_dir_mode.t
 #
 # DESCRIPTION
-#   Test program to check getting directory mode.
+#   Test script to check getting directory mode.
 #
 # COPYRIGHT
 #   Copyright (c) 2003-2004, Steve Hay.  All rights reserved.

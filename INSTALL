@@ -1,6 +1,6 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.33
+                        Win32::UTCFileTime, Version 1.40
 ________________________________________________________________________________
 
 INSTALLATION
@@ -36,6 +36,7 @@ PREREQUISITES
     suffer the behaviour which this module provides corrections to.
 
     Perl version 5.6.0 or later.
+    The latest version of Perl is available from http://www.perl.com/.
 
     There are no non-standard Perl modules required by this module.
 ________________________________________________________________________________

@@ -4,7 +4,7 @@
 # t/08_default_arg.t
 #
 # DESCRIPTION
-#   Test program to check default arguments.
+#   Test script to check default arguments.
 #
 # COPYRIGHT
 #   Copyright (c) 2004, Steve Hay.  All rights reserved.

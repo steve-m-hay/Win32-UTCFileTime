@@ -4,7 +4,7 @@
 # t/02_dir_times.t
 #
 # DESCRIPTION
-#   Test program to check getting/setting directory times.
+#   Test script to check getting/setting directory times.
 #
 # COPYRIGHT
 #   Copyright (c) 2003-2004, Steve Hay.  All rights reserved.

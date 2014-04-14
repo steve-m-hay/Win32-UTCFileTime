@@ -4,7 +4,7 @@
 # t/03_file_mode.t
 #
 # DESCRIPTION
-#   Test program to check getting file mode.
+#   Test script to check getting file mode.
 #
 # COPYRIGHT
 #   Copyright (c) 2003-2004, Steve Hay.  All rights reserved.

@@ -4,7 +4,7 @@
 # t/01_file_times.t
 #
 # DESCRIPTION
-#   Test program to check getting/setting file times.
+#   Test script to check getting/setting file times.
 #
 # COPYRIGHT
 #   Copyright (c) 2003-2004, Steve Hay.  All rights reserved.

@@ -4,7 +4,7 @@
 # t/05_file_misc.t
 #
 # DESCRIPTION
-#   Test program to check getting miscellaneous file information.
+#   Test script to check getting miscellaneous file information.
 #
 # COPYRIGHT
 #   Copyright (c) 2003-2004, Steve Hay.  All rights reserved.

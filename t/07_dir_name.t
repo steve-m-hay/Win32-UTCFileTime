@@ -4,7 +4,7 @@
 # t/07_dir_name.t
 #
 # DESCRIPTION
-#   Test program to check getting info for various directory names.
+#   Test script to check getting info for various directory names.
 #
 # COPYRIGHT
 #   Copyright (c) 2003-2004, Steve Hay.  All rights reserved.

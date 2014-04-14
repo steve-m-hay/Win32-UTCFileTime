@@ -1,6 +1,6 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.33
+                        Win32::UTCFileTime, Version 1.40
 ________________________________________________________________________________
 
 NAME
@@ -10,8 +10,8 @@ NAME
 SYNOPSIS
 
     # Override built-in stat()/lstat()/utime() within current package only:
-    use Win32::UTCFileTime;
-    @stats = stat $file or die "stat() failed: $^E\n";
+    use Win32::UTCFileTime qw(:DEFAULT $ErrStr);
+    @stats = stat $file or die "stat() failed: $ErrStr\n";
     $now = time;
     utime $now, $now, $file;
 
@@ -20,8 +20,8 @@ SYNOPSIS
     ...
 
     # Use an alternative implementation of stat() instead:
-    use Win32::UTCFileTime qw(alt_stat);
-    @stats = alt_stat($file) or die "alt_stat() failed: $^E\n";
+    use Win32::UTCFileTime qw(alt_stat $ErrStr);
+    @stats = alt_stat($file) or die "alt_stat() failed: $ErrStr\n";
 
 DESCRIPTION
 
@@ -43,8 +43,8 @@ COPYRIGHT
 
 LICENCE
 
-    This module is free software; you can redistribute it and/or modify it under
-    the same terms as Perl itself, i.e. under the terms of either the GNU
+    This distribution is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself, i.e. under the terms of either the GNU
     General Public License or the Artistic License, as specified in the LICENCE
     file.
 ________________________________________________________________________________
