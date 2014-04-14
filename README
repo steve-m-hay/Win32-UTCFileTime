@@ -1,6 +1,7 @@
+________________________________________________________________________________
 
-Win32::UTCFileTime version 1.20
-===============================
+                        Win32::UTCFileTime, Version 1.30
+________________________________________________________________________________
 
 NAME
 
@@ -32,27 +33,18 @@ DESCRIPTION
 
 INSTALLATION
 
-    To install this module type the following:
+    See the INSTALL file.
 
-        perl Makefile.PL
-        nmake
-        nmake test
-        nmake install
+COPYRIGHT
 
-DEPENDENCIES
+    Copyright (c) 2003-2004, Steve Hay.  All rights reserved.
+    Portions Copyright (c) 2001, Jonathan M Gilligan.  Used with permission.
+    Portions Copyright (c) 2001, Tony M Hoyle.  Used with permission.
 
-    There are no non-standard modules required by this module.
+LICENCE
 
-    This module is only applicable on Microsoft Windows platforms when using a
-    Perl built using Microsoft Visual C since other C build environments do not
-    (presumably) suffer the Microsoft-specific behaviour which this module
-    provides corrections to.
-
-COPYRIGHT AND LICENCE
-
-    Copyright (c) 2003, Steve Hay. All rights reserved.
-    Portions Copyright (c) 2001, Jonathan M Gilligan. Used with permission.
-    Portions Copyright (c) 2001, Tony M Hoyle. Used with permission.
-
-    This program is free software; you can redistribute it and/or modify it
-    under the same terms as Perl itself.
+    This module is free software; you can redistribute it and/or modify it under
+    the same terms as Perl itself, i.e. under the terms of either the GNU
+    General Public License or the Artistic License, as specified in the LICENCE
+    file.
+________________________________________________________________________________

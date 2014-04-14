@@ -1,42 +1,48 @@
 #!perl
-#-------------------------------------------------------------------------------
-# Copyright (c) 2003, Steve Hay. All rights reserved.
+#===============================================================================
 #
-# Module Name:  Win32::UTCFileTime
-# Source File:  02_dir_times.t
-# Description:  Test program to check getting/setting directory times
-#-------------------------------------------------------------------------------
+# 02_dir_times.t
+#
+# DESCRIPTION
+#   Test program to check getting/setting directory times.
+#
+# COPYRIGHT
+#   Copyright (c) 2003-2004, Steve Hay.  All rights reserved.
+#
+# LICENCE
+#   You may distribute under the terms of either the GNU General Public License
+#   or the Artistic License, as specified in the LICENCE file.
+#
+#===============================================================================
 
-use 5.006;
+use 5.006000;
 
 use strict;
 use warnings;
 
 use Test;
 
+#===============================================================================
+# INITIALISATION
+#===============================================================================
+
 BEGIN {
     plan tests => 17;                   # Number of tests to be executed
-};
+}
 
 use Win32::UTCFileTime;
 
-#-------------------------------------------------------------------------------
-#
-# Main program.
-#
+#===============================================================================
+# MAIN PROGRAM
+#===============================================================================
 
 MAIN: {
-    my( $dir,                           # Test directory
-        $time,                          # Scratch time
-        @stats,                         # Return array from stat()
-        @lstats,                        # Return array from lstat()
-        @alt_stats                      # Return array from alt_stat()
-        );
-
                                         # Test 1: Did we make it this far OK?
     ok(1);
 
-    $dir = 'test';
+    my $dir = 'test';
+
+    my($time, @stats, @lstats, @alt_stats);
 
                                         # Tests 2-3: Check stat()
     rmdir $dir or die "Can't delete directory '$dir': $!\n" if -e $dir;
@@ -88,4 +94,4 @@ MAIN: {
     rmdir $dir;
 }
 
-#-------------------------------------------------------------------------------
+#===============================================================================

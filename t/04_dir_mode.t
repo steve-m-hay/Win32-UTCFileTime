@@ -1,41 +1,48 @@
 #!perl
-#-------------------------------------------------------------------------------
-# Copyright (c) 2003, Steve Hay. All rights reserved.
+#===============================================================================
 #
-# Module Name:  Win32::UTCFileTime
-# Source File:  04_dir_mode.t
-# Description:  Test program to check getting directory mode
-#-------------------------------------------------------------------------------
+# 04_dir_mode.t
+#
+# DESCRIPTION
+#   Test program to check getting directory mode.
+#
+# COPYRIGHT
+#   Copyright (c) 2003-2004, Steve Hay.  All rights reserved.
+#
+# LICENCE
+#   You may distribute under the terms of either the GNU General Public License
+#   or the Artistic License, as specified in the LICENCE file.
+#
+#===============================================================================
 
-use 5.006;
+use 5.006000;
 
 use strict;
 use warnings;
 
 use Test;
 
+#===============================================================================
+# INITIALISATION
+#===============================================================================
+
 BEGIN {
     plan tests => 9;                    # Number of tests to be executed
-};
+}
 
 use Win32::UTCFileTime;
 
-#-------------------------------------------------------------------------------
-#
-# Main program.
-#
+#===============================================================================
+# MAIN PROGRAM
+#===============================================================================
 
 MAIN: {
-    my( $dir,                           # Test directory
-        @cstats,                        # Return array from core stat()
-        @rstats,                        # Return array from replacement stat()
-        @astats                         # Return array from alternative stat()
-        );
-
                                         # Test 1: Did we make it this far OK?
     ok(1);
 
-    $dir = 'test';
+    my $dir = 'test';
+
+    my(@cstats, @rstats, @astats);
 
     mkdir $dir or die "Can't create directory '$dir': $!\n";
 
@@ -73,5 +80,4 @@ MAIN: {
     rmdir $dir;
 }
 
-#-------------------------------------------------------------------------------
-
+#===============================================================================

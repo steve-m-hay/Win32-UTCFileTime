@@ -1,26 +1,64 @@
 ________________________________________________________________________________
 
+                        Win32::UTCFileTime, Version 1.30
+________________________________________________________________________________
+
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.30 22 Feb 2004
+
+    - Changed stat(), lstat() and alt_stat() to use $_ if no argument is given,
+      as per the Perl built-in functions.
+
+    - Added new test program to exercise this new feature.
+
+    - Clarified licence and warranty for the module, and included relevant
+      licence files in the distribution.
+
+    - Moved installation instructions to a separate INSTALL file.
+
+    - Added PREOP to the dist option in Makefile.PL to ensure permissions are
+      set correctly within the distdir (since they often aren't set correctly in
+      the top-level directory when working on Windows) to stop CPANTS from
+      complaining about bad permissions.
+
+    - Added COMPRESS (and SUFFIX) and ZIPFLAGS to the dist option in Makefile.PL
+      to enable "best compression" for gzip when running "nmake dist" and for
+      zip when running "nmake zipdist" respectively.
+
+    - Added clean option to Makefile.PL to have the const-c.inc and const-xs.inc
+      files deleted by "nmake clean".
+
+    - Added MANIFEST.SKIP to stop "nmake distcheck" from producing bogus
+      warnings.
+
+    - Moved SharedFileOpen.pm into lib/Win32/ sub-directory within distribution.
+      This is the new layout style produced by h2xs as of version 1.23.
+
+    - Removed ppport.h since no use was being made of it.  (This module builds
+      on Perl installations back to 5.6.0, both with and without ithreads,
+      without needing any portability fixups.)
 _________________
 
 v1.20 24 Sep 2003
 
     - Introduced an alternative C stat(2) function from CVSNT and Perl code that
-      can succeed in some cases where Microsoft's implementation fails. A Perl
+      can succeed in some cases where Microsoft's implementation fails.  A Perl
       interface, alt_stat(), is optionally exported, and can be automatically
       tried by the replacement stat() and lstat() functions if the built-in
       functions that they call first fail.
 
     - Changed the replacement utime()'s use of Perl's trick for making it work
-      on directories too. The trick only works under Windows NT platforms, so it
-      is more appropriate to try a more natural approach first and only fall
-      back on the trick if that fails. This is the approach that Perl uses too.
+      on directories too.  The trick only works under Windows NT platforms, so
+      it is more appropriate to try a more natural approach first and only fall
+      back on the trick if that fails.  This is the approach that Perl uses too.
 
     - Improved the replacement stat() and lstat() functions by having them fall
       back on CreateFile() if FindFirstFile() fails when getting the correct UTC
-      file times. The file times can now be retrieved under Windows NT platforms
-      for root (drive or UNC) directories, and for directories specified with a
-      trailing slash or backslash.
+      file times.  The file times can now be retrieved under Windows NT
+      platforms for root (drive or UNC) directories, and for directories
+      specified with a trailing slash or backslash.
 
     - Improved the detection of the filesystem when determining whether or not
       it stores UTC file times.
@@ -36,7 +74,7 @@ v1.20 24 Sep 2003
 
     - Renamed some functions in the XS and C code.
 
-    - Reverted the typemap for "const char *" back to the default T_PV. There
+    - Reverted the typemap for "const char *" back to the default T_PV.  There
       didn't seem to be any point in the custom typemap.
 
     - Changed tabs to spaces (via "expand -t 4 infile > outfile") to avoid
@@ -47,7 +85,7 @@ _________________
 
 v1.10 23 Jun 2003
 
-    - Incorporated improvements to the underlying C code from CVSNT code. The
+    - Incorporated improvements to the underlying C code from CVSNT code.  The
       DST season transition dates are now correctly calculated (assuming that
       they are not determined by year-specific clues), rather than assuming the
       United States' rule applies.

@@ -1,41 +1,48 @@
 #!perl
-#-------------------------------------------------------------------------------
-# Copyright (c) 2003, Steve Hay. All rights reserved.
+#===============================================================================
 #
-# Module Name:  Win32::UTCFileTime
-# Source File:  03_file_mode.t
-# Description:  Test program to check getting file mode
-#-------------------------------------------------------------------------------
+# 03_file_mode.t
+#
+# DESCRIPTION
+#   Test program to check getting file mode.
+#
+# COPYRIGHT
+#   Copyright (c) 2003-2004, Steve Hay.  All rights reserved.
+#
+# LICENCE
+#   You may distribute under the terms of either the GNU General Public License
+#   or the Artistic License, as specified in the LICENCE file.
+#
+#===============================================================================
 
-use 5.006;
+use 5.006000;
 
 use strict;
 use warnings;
 
 use Test;
 
+#===============================================================================
+# INITIALISATION
+#===============================================================================
+
 BEGIN {
     plan tests => 41;                   # Number of tests to be executed
-};
+}
 
 use Win32::UTCFileTime;
 
-#-------------------------------------------------------------------------------
-#
-# Main program.
-#
+#===============================================================================
+# MAIN PROGRAM
+#===============================================================================
 
 MAIN: {
-    my( @files,                         # Array of test files
-        @cstats,                        # Return array from core stat()
-        @rstats,                        # Return array from replacement stat()
-        @astats                         # Return array from alternative stat()
-        );
-
                                         # Test 1: Did we make it this far OK?
     ok(1);
 
-    @files = map { "test.$_" } qw(txt exe bat com cmd);
+    my @files = map { "test.$_" } qw(txt exe bat com cmd);
+
+    my(@cstats, @rstats, @astats);
 
     foreach my $file (@files) {
         open my $fh, ">$file" or die "Can't create file '$file': $!\n";
@@ -82,4 +89,4 @@ MAIN: {
     }
 }
 
-#-------------------------------------------------------------------------------
+#===============================================================================
