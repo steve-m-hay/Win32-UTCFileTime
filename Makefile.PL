@@ -41,15 +41,34 @@ BEGIN {
 #===============================================================================
 
 MAIN: {
-    name          ('Win32-UTCFileTime');
-    license       ('perl');
-    all_from      ('lib/Win32/UTCFileTime.pm');
-    test_requires ('Test::More');
-    feature       ('POD testing' => [
-                   -default    => 0,
-                   'Test::Pod' => '1.00'
+    name               ('Win32-UTCFileTime');
+    license            ('perl');
+    all_from           ('lib/Win32/UTCFileTime.pm');
+    configure_requires ('Carp');
+    configure_requires ('Config');
+    configure_requires ('Cwd');
+    configure_requires ('ExtUtils::MakeMaker');
+    configure_requires ('File::Basename');
+    configure_requires ('File::Copy');
+    configure_requires ('File::Find');
+    configure_requires ('File::Path');
+    configure_requires ('File::Spec');
+    configure_requires ('File::Spec::Functions');
+    configure_requires ('FindBin');
+    configure_requires ('Getopt::Long');
+    configure_requires ('Pod::Usage');
+    configure_requires ('Text::Wrap');
+    configure_requires ('strict');
+    configure_requires ('vars');
+    configure_requires ('warnings');
+    test_requires      ('Test::More');
+    requires           ('Exporter');
+    requires           ('XSLoader');
+    feature            ('POD testing' => [
+                        -default    => 0,
+                        'Test::Pod' => '1.00'
     ]);
-    clean_files   ('const-c.inc const-xs.inc');
+    clean_files        ('const-c.inc const-xs.inc');
 
     my $obj = get_shay_private_obj();
     $obj->check_compiler(0);

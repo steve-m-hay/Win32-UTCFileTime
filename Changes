@@ -1,9 +1,15 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.50
+                        Win32::UTCFileTime, Version 1.51
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.51 11 Oct 2009
+
+    - Declare all core module dependencies in the Makefile.PL as well as the
+      existing CPAN module dependencies. (Cf. [cpan #50107].)
 _________________
 
 v1.50 25 Aug 2008
