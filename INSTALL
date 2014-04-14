@@ -1,6 +1,6 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.44
+                        Win32::UTCFileTime, Version 1.45
 ________________________________________________________________________________
 
 PREREQUISITES
@@ -8,8 +8,8 @@ PREREQUISITES
     Windows
 
         This module is only applicable on "native" (i.e. non-Cygwin) Microsoft
-        Windows platforms since only those platforms have C runtime libraries
-        that suffer the behaviour which this module provides corrections to.
+        Windows platforms since only those platforms have C run-time libraries
+        suffering the behaviour to which this module provides corrections.
 
     Compiler
 
@@ -19,8 +19,8 @@ PREREQUISITES
         as was used to build your Perl itself.
 
         In particular, this module may not work correctly if it loads a
-        different C runtime DLL to that loaded by perl itself.  Note that Visual
-        Studio 98 (VC++ 6) and earlier produce binaries that require the
+        different C run-time DLL to that loaded by perl itself.  Note that
+        Visual Studio 98 (VC++ 6) and earlier produce binaries that require the
         system's msvcrt.dll, while Visual Studio .NET/2003 (VC++ 7) and later
         (including the free Visual C++ Toolkit 2003) produce binaries that
         require compiler-specific DLL's named msvcr70.dll, msvcr71.dll, etc.
@@ -32,8 +32,8 @@ PREREQUISITES
         being used and will give a warning if necessary.  Note, however, that it
         is not always possible for it to detect which particular compiler
         version was used to build Perl, especially for Perl version 5.8.6 or
-        older which didn't have this information stored in the standard library
-        module Config.
+        older, which did not have this information stored in the standard
+        library module Config.
 
     Perl
 

@@ -13,7 +13,7 @@ typemap
 UTCFileTime.xs
 fallback/const-c.inc
 fallback/const-xs.inc
-inc/ExtUtils/AutoInstall.pm
+inc/Module/AutoInstall.pm
 inc/Module/Install.pm
 inc/Module/Install/AutoInstall.pm
 inc/Module/Install/Base.pm

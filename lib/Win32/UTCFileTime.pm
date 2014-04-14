@@ -7,7 +7,7 @@
 #   Win32.
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -22,7 +22,7 @@ use 5.006000;
 use strict;
 use warnings;
 
-use Carp;
+use Carp qw(croak);
 use Exporter qw();
 use XSLoader qw();
 
@@ -51,7 +51,7 @@ BEGIN {
         alt_stat
     );
     
-    $VERSION = '1.44';
+    $VERSION = '1.45';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -59,8 +59,8 @@ BEGIN {
 # Last error message.
 our $ErrStr = '';
 
-# Control whether or not to try alt_stat() if CORE::stat() or CORE::lstat()
-# fails.  (Boolean.)
+# Control whether to try alt_stat() if CORE::stat() or CORE::lstat() fails.
+# (Boolean.)
 our $Try_Alt_Stat = 0;
 
 #===============================================================================
@@ -127,7 +127,7 @@ sub stat(;$) {
 
     $ErrStr = '';
 
-    # Make sure we don't display a message box asking the user to insert a
+    # Make sure we do not display a message box asking the user to insert a
     # floppy disk or CD-ROM.
     my $old_umode = _set_error_mode(SEM_FAILCRITICALERRORS());
 
@@ -177,7 +177,7 @@ sub lstat(;$) {
 
     $ErrStr = '';
 
-    # Make sure we don't display a message box asking the user to insert a
+    # Make sure we do not display a message box asking the user to insert a
     # floppy disk or CD-ROM.
     my $old_umode = _set_error_mode(SEM_FAILCRITICALERRORS());
 
@@ -227,7 +227,7 @@ sub alt_stat(;$) {
 
     $ErrStr = '';
 
-    # Make sure we don't display a message box asking the user to insert a
+    # Make sure we do not display a message box asking the user to insert a
     # floppy disk or CD-ROM.
     my $old_umode = _set_error_mode(SEM_FAILCRITICALERRORS());
 
@@ -294,10 +294,10 @@ Win32::UTCFileTime - Get/set UTC file times with stat/utime on Win32
 =head1 DESCRIPTION
 
 This module provides replacements for Perl's built-in C<stat()> and C<utime()>
-functions which respctively get and set "correct" UTC file times, instead of the
+functions that respectively get and set "correct" UTC file times instead of the
 erroneous values read and written by Microsoft's implementation of C<stat(2)>
-and C<utime(2)> which Perl's built-in functions inherit on Win32 when built with
-the Microsoft C library.
+and C<utime(2)>, which Perl's built-in functions inherit on Win32 when built
+with the Microsoft C library.
 
 For completeness, a replacement for Perl's built-in C<lstat()> function is also
 provided, although in practice that is unimplemented on Win32 and just calls
@@ -317,34 +317,31 @@ It seems particularly ironic that the problem should afflict the NTFS filesystem
 because the C<time_t> values used by both C<stat(2)> and C<utime(2)> express
 UTC-based times, and NTFS stores file times in UTC.  However, Microsoft's
 implementation of both of these functions use a variety of Win32 API calls that
-mangle the numbers in ways that don't quite turn out right when a DST season
+mangle the numbers in ways that do not quite turn out right when a DST season
 change is involved.  On FAT volumes, the filesystem used by Windows 95/98/ME,
 file times are stored in local time and are put through even more contortions by
 these functions, but actually emerge correctly, so file times are stable across
 DST seasons on FAT volumes.  The NTFS/FAT difference is taken into account by
-this module's repacement C<stat()>, C<lstat()> and C<utime()> functions so that
-corrections are not erroneously applied when they shouldn't be.
+this module's replacement C<stat()>, C<lstat()> and C<utime()> functions so that
+corrections are not erroneously applied when they should not be.
 
 The problems that arise when mangling time values between UTC and local time are
-due to the fact that the mapping from UTC to local time is not one-to-one.  It
-is straightforward to convert UTC to local time, but there is an ambiguity when
+because the mapping from UTC to local time is not one-to-one.  It is
+straightforward to convert UTC to local time, but there is an ambiguity when
 converting back from local time to UTC involving DST.  The Win32 API provides
 two documented functions (C<FileTimeToLocalFileTime()> and
-C<LocalFileTimeToFileTime()>) for these conversions which resolve the ambiguity
+C<LocalFileTimeToFileTime()>) for these conversions that resolve the ambiguity
 by, arguably "wrongly", using an algorithm involving the current system time
-rather than the file time being converted to decide whether or not to apply a
-DST correction; the advantage of this scheme is that these functions are exact
+rather than the file time being converted to decide whether to apply a DST
+correction; the advantage of this scheme is that these functions are exact
 inverses.  Another, undocumented, function is also used internally by C<stat(2)>
-for the tricky local time to UTC conversion which, "correctly", uses the file
-time being converted to decide whether or not to apply a DST correction.  The
-Win32 API also provides a C<GetTimeZoneInformation()> function that can be used
-to determine whether or not the file time being converted is in daylight saving
-time, which forms the basis of the solution provided by this module.  The
-standard C library provides C<localtime(3)> for UTC to local time conversion,
-albeit from C<time_t> format to C<struct tm> format, (and also C<gmtime(3)> for
-the same structure-conversion without converting to local time), and
-C<mktime(3)> for local time to UTC conversion, applying a DST correction or not
-as instructed by one of the fields in its C<struct tm> argument.
+for the tricky local time to UTC conversion, which, "correctly", uses the file
+time being converted to decide whether to apply a DST correction.  The standard
+C library provides C<localtime(3)> for UTC to local time conversion, albeit from
+C<time_t> format to C<struct tm> format, (and also C<gmtime(3)> for the same
+structure-conversion without converting to local time), and C<mktime(3)> for
+local time to UTC conversion, applying a DST correction or not as instructed by
+one of the fields in its C<struct tm> argument.
 
 See L<"BACKGROUND REFERENCE"> for more details.
 
@@ -380,23 +377,22 @@ backslashes under Windows NT platforms.
 (As described in the L<"BACKGROUND REFERENCE"> section, the Microsoft C library
 C<stat(2)> function, and hence Perl's built-in C<stat()> function, calls the
 Win32 API function C<FindFirstFile()>.  That function is documented to fail on
-directories specified with a trailing slash or backslash, hence the built-in
-function will not succeed.  It fact, it falls back on another Win32 API
+directories that are specified with a trailing slash or backslash, so the
+built-in function will not succeed.  It fact, it falls back on another Win32 API
 function, C<GetFileAttributes()>, to set up the C<st_mode> field and then
 returns success in such cases, but leaving the other fields set to zero.
 
-The replacement functions also call C<FindFirstFile()> when calculating the
-correct UTC file times, but have a different fall-back function, namely
-C<CreateFile()>, if that fails.  C<CreateFile()> can open directories specified
-with a trailing slash or backslash, but only under Windows NT platforms.  The
-file time fields will thus be set correctly by these replacement functions on
-Windows NT platforms.  (Under Windows 95 platforms, they are set to zero and the
-functions succeed, as per the Perl built-ins.)  Note, however, that the other
-fields, left over from the original call to Perl's built-in C<stat()> or
-C<lstat()> function, will still be zero.  For a complete alternative C<stat()>
-function that only uses C<CreateFile()>, and will thus set all fields correctly
-even for directories specified with a trailing slash or backslash, albeit only
-under Windows NT platforms, use the C<alt_stat()> function.)
+The replacement functions call a different Win32 API function, C<CreateFile()>,
+which can open directories specified with a trailing slash or backslash, but
+only under Windows NT platforms.  The file time fields will thus be set
+correctly by these replacement functions on Windows NT platforms.  (Under
+Windows 95 platforms, they are set to zero and the functions succeed, as per the
+Perl built-ins.)  Note, however, that the other fields, left over from the
+original call to Perl's built-in C<stat()> or C<lstat()> function, will still be
+zero.  For a complete alternative C<stat()> function that only uses
+C<CreateFile()>, and will thus set all fields correctly even for directories
+specified with a trailing slash or backslash, albeit only under Windows NT
+platforms, use the C<alt_stat()> function.)
 
 The replacement C<utime()> function provided by this module behaves identically
 to Perl's built-in function of the same name, except that:
@@ -477,14 +473,14 @@ Note that you cannot use this module in conjunction with the File::stat module
 13-element list) because both modules operate by overriding Perl's built-in
 C<stat()> function.  Only the second override to be applied would have effect.
 
-In scalar context, returns a boolean value indicating success or failure (and
+In scalar context, returns a Boolean value indicating success or failure (and
 sets $ErrStr on failure).
 
 =item C<lstat([$link])>
 
 Gets the status information for the symbolic link $link.  If $file is omitted
 then C<$_> is used instead.  This is the same as C<stat()> on Win32, which
-doesn't implement symbolic links.
+does not implement symbolic links.
 
 =item C<alt_stat([$file])>
 
@@ -506,10 +502,10 @@ trailing slash or backslash.
 
 C<alt_stat()> avoids both of these problems by using a different Win32 API
 function, C<CreateFile()>, instead.  That function opens a file directly and
-hence doesn't require the process to have "List Folder Contents" permission on
+hence does not require the process to have "List Folder Contents" permission on
 the parent directory.  It can also open directories specified with trailing
 slash or backslash, but only under Windows NT platforms.  B<In fact, under
-Windows 95 platforms, it can't open directories at all and will only set the
+Windows 95 platforms, it cannot open directories at all and will only set the
 C<st_mode> field correctly;> the other fields will be set to zero, like the Perl
 built-in C<stat()> and C<lstat()> functions do for directories specified with a
 trailing slash or backslash.
@@ -517,7 +513,7 @@ trailing slash or backslash.
 The main disadvantage with using this function is that the entire C<struct stat>
 has to be built by hand by it, rather than simply inheriting most of it from the
 Microsoft C<stat(2)> call and then overwriting the file time fields.  Thus, some
-of the fields, notably the C<st_mode> field which is somewhat ambiguous on
+of the fields, notably the C<st_mode> field, which is somewhat ambiguous on
 Win32, may have different values to those that would have been set by the other
 C<stat()> functions.
 
@@ -563,8 +559,8 @@ If a function succeeds then this variable will be set to the null string.
 
 =item $Try_Alt_Stat
 
-Control whether or not to try C<alt_stat()> if C<CORE::stat()> or
-C<CORE::lstat()> fails.
+Control whether to try C<alt_stat()> if C<CORE::stat()> or C<CORE::lstat()>
+fails.
 
 Boolean value.
 
@@ -583,8 +579,8 @@ The default value is 0, i.e. the C<alt_stat()> function is not tried.
 
 =head2 Warnings and Error Messages
 
-The following diagnostic messages may be produced by this module.  They are
-classified as follows (a la L<perldiag>):
+This module may produce the following diagnostic messages.  They are classified
+as follows (a la L<perldiag>):
 
     (W) A warning (optional).
     (F) A fatal error (trappable).
@@ -611,12 +607,6 @@ to the Win32 API last error code is also given.
 after updating the file times using it.  The system error message corresponding
 to the Win32 API last error code is also given.
 
-=item Can't close file search handle '%lu' for file '%s' after reading: %s
-
-(W) The specified file search handle for the specified file could not be closed
-after reading file information from it.  The system error message corresponding
-to the Win32 API last error code is also given.
-
 =item Can't convert base SYSTEMTIME to FILETIME: %s
 
 (I) The C<SYSTEMTIME> representation of the epoch of C<time_t> values (namely,
@@ -624,39 +614,15 @@ to the Win32 API last error code is also given.
 representation.  The system error message corresponding to the Win32 API last
 error code is also given.
 
-=item Can't determine name of filesystem: %s.  Assuming file times are stored as
-UTC-based values
-
-(W) The name of the filesystem that the file concerned is on could not be
-determined.  This information is required because different filesystems store
-file times in different formats (in particular, NTFS stores UTC-based values,
-whereas FAT stores local time-based value).  A filesystem that stores UTC-based
-values is assumed in this case.  The system error message corresponding to the
-Win32 API last error code is also given.
-
 =item Can't determine operating system platform: %s.  Assuming the platform is
 Windows NT
 
 (W) The operating system platform (i.e. Win32s, Windows (95/98/ME), Windows NT
 or Windows CE) could not be determined.  This information is used by the
-C<alt_stat()> function to decide whether or not a F<".cmd"> file extension
-represents an "executable file" when setting up the C<st_mode> field of the
-C<struct stat>.  A Windows NT platform is assumed in this case.  The system
-error message corresponding to the Win32 API last error code is also given.
-
-=item Can't get time zone information: %s
-
-(F) The current time zone parameters controlling the translations between UTC
-and local time could not be retrieved.  The system error message corresponding
-to the Win32 API last error code is also given.
-
-=item Can't handle year-specific DST clues in time zone information
-
-(F) The current time zone parameters controlling the translations between UTC
-and local time are represented as a C<TIME_ZONE_INFORMATION> stucture in which
-one or both of the transition dates between standard time and daylight time are
-given in "absolute" format rather than "day-in-month" format.  Transition dates
-in this format are not currently supported by this module.
+C<alt_stat()> function to decide whether a F<".cmd"> file extension represents
+an "executable file" when setting up the C<st_mode> field of the C<struct stat>.
+A Windows NT platform is assumed in this case.  The system error message
+corresponding to the Win32 API last error code is also given.
 
 =item %s is not a valid Win32::UTCFileTime macro
 
@@ -667,22 +633,8 @@ Win32::UTCFileTime module, but that constant is unknown to this module.
 
 (W) The number of hard links to the specified file is greater than the largest
 C<short int>, and therefore cannot be assigned to the C<st_nlink> field of the
-C<struct stat> setup by C<alt_stat()>.  The largest C<short int> itself is used
+C<struct stat> set-up by C<alt_stat()>.  The largest C<short int> itself is used
 instead in this case.
-
-=item The test date used in a date comparison is not in the required "absolute"
-format
-
-(I) The file time being tested against the transition dates between standard
-time and daylight time is given in "day-in-month" format rather than "absolute"
-format.
-
-=item The target date used in a date comparison is not in the required
-"day-in-month" format
-
-(I) One of the transition dates between standard time and daylight time, being
-used to test a file time against, is given in "absolute" format rather than
-"day-in-month" format.
 
 =item Unexpected error in AUTOLOAD(): constant() is not defined
 
@@ -709,12 +661,6 @@ they fail.  The possible values are as follows:
 
 =over 4
 
-=item Can't convert FILETIME to SYSTEMTIME: %s
-
-The C<FILETIME> representation of a time could not be converted to its
-C<SYSTEMTIME> representation.  The system error message corresponding to the
-Win32 API last error code is also given.
-
 =item Can't get file information for file '%s': %s
 
 File information could not be read from an open file handle on the specified
@@ -723,7 +669,7 @@ is also given.
 
 =item Can't open file '%s' for reading: %s
 
-The specified file could not be opened for reading file information from.  The
+The specified file could not be opened for reading the file information.  The
 system error message corresponding to the Win32 API last error code is also
 given.
 
@@ -742,7 +688,7 @@ is also given.
 
 The C<CORE::stat()> or C<CORE::lstat()> function failed for the specified file
 or link.  (The replacement C<stat()> and C<lstat()> functions call their CORE
-counterparts prior to getting the "correct" UTC file times.)  The system error
+counterparts before getting the "correct" UTC file times.)  The system error
 message corresponding to the standard C library C<errno> variable is also given.
 
 =item Wildcard in filename '%s'
@@ -828,7 +774,7 @@ Daylight Savings Time Bug in C Run-Time Library) refers to a different problem
 involving the Microsoft C library that was confirmed as a bug and was fixed in
 Visual Studio 6.0 Service Pack 3, so it is worth ensuring that your edition of
 Visual Studio is upgraded to at least that Service Pack level when you build
-Perl and this module.  (At the time of writing, Service Pack 5 is the latest
+Perl and this module.  (At the time of writing, Service Pack 6 is the latest
 available for Visual Studio 6.0.)
 
 An excellent overview of the problem with Microsoft's C<stat(2)> was written by
@@ -841,16 +787,16 @@ F<http://www.codeproject.com/datetime/dstbugs.asp>.
 (The article was accompanied by a C library, adapted from code written for CVSNT
 (F<http://www.cvsnt.org/>) by Jonathan and Tony M Hoyle, which implemented the
 solution outlined at the end of his article.  The solution provided by this
-module is based on that library and the original CVSNT code itself (version
-2.0.4), which both authors kindly granted permission to use under the terms of
-the Perl Artistic License as well as the GNU GPL.)
+module is partly based on that library and the original CVSNT code itself
+(version 2.0.4), which both authors kindly granted permission to use under the
+terms of the Perl Artistic License as well as the GNU GPL.)
 
 =head2 Introduction
 
 Not many Windows developers seem aware of it, but Microsoft deliberately
 designed Windows NT to report incorrect file creation, modification, and access
 times.  This decision is documented in the Knowledge Base in articles Q128126
-and Q158588.  For most purposes, this behavior is innocuous, but as Microsoft
+and Q158588.  For most purposes, this behaviour is innocuous, but as Microsoft
 writes in Q158588,
 
     After the automatic correction for Daylight Savings Time, monitoring
@@ -861,7 +807,7 @@ writes in Q158588,
     database-synchronization software, software-distribution packages, backup
     software...
 
-This behavior is responsible for a flood of questions to the various support
+This behaviour is responsible for a flood of questions to the various support
 lists for CVS, following the first Sunday in April and the last Sunday in
 October, with scores of people complaining that CVS now reports erroneously that
 their files have been modified.  This is commonly known as the "red file bug"
@@ -974,12 +920,12 @@ F<http://ecco.bsee.swin.edu.au/chronos/GMT-explained.html>.
 
 =head2 UTC, time zones, and Windows file times
 
-So what does this all have to do with file modification times on Windows
+So, what does this all have to do with file modification times on Windows
 computers? Windows is stuck with some serious problems integrating FAT and NTFS
 files compatibly.  FAT records file modification times with respect to the local
 time zone, while NTFS records file modification (as well as creation and access
 times, which FAT does not record) in UTC.  The first question you may want to
-ask is, "How should Windows report these file times?"  Clearly it would be
+ask is, "How should Windows report these file times?"  Clearly, it would be
 stupid for C<dir> and Windows Explorer to report FAT file times in the local
 time zone and NTFS file times in UTC.  If inconsistent formats were used, users
 would have great difficulty determining which of two files was more recent.  We
@@ -1018,7 +964,7 @@ degenerate mapping means that we can't be sure which UTC time corresponds to
 Oct 28 2001, we can't determine the UTC time.
 
 When translating local file times to UTC and vice-versa, Microsoft made a
-strange decision.  We would like to have the following code procduce C<out_time>
+strange decision.  We would like to have the following code produce C<out_time>
 equal to C<in_time>
 
     FILETIME in_time, local_time, out_time;
@@ -1033,7 +979,7 @@ standard time, UTC-5 hours for daylight time) then C<in_time> = 06:30 Oct 28
 2001 and C<in_time> = 07:30 Oct 28 2001 both map onto the same local time, 01:30
 Oct 28 2001 and we don't know which branch to choose when we execute
 C<LocalFileTimeToFileTime()>.  Microsoft picked an incorrect, but unambiguously
-invertable algorithm: move all times up an hour when daylight time is in effect
+invertible algorithm: move all times up an hour when daylight time is in effect
 on the local computer, irrespective of the DST state of the time being
 converted.  Thus, if DST is in effect on my local computer,
 C<FileTimeToLocalFileTime()> converts 06:30 Oct 28 2001 UTC to 01:30 CDT and
@@ -1052,6 +998,7 @@ time thus:
     WIN32_FIND_DATA find_buf;
     HANDLE hFile;
     FILETIME local_ft;
+    SYSTEMTIME local_st;
     time_t mod_time;
 
     // FindFirstFile() returns times in UTC.
@@ -1062,11 +1009,12 @@ time thus:
 
     // Convert UTC time to local time.
     FileTimeToLocalFileTime(&find_buf.ftLastWriteTime, &local_ft);
+    FileTimeToSystemTime(&local_ft, &local_st);
 
     // Now use a private, undocumented function to convert local time to UTC
     // time according to the DST settings appropriate to the time being
     // converted!
-    mod_time = __loctotime_t(local_ft);
+    mod_time = __loctotime_t(local_st);
 
 For a FAT file, the conversions work like this:
 
@@ -1157,8 +1105,8 @@ seconds.
 
 For the second case, C<stat(2)> will work and return a C<time_t> that you can
 compare to the stored one.  If you must use C<GetFileTime()> do not use
-C<LocalFileTimeToFileTime()>.  This function will apply the the daylight status
-of the current system time, not the daylight status of the file time in the
+C<LocalFileTimeToFileTime()>.  This function will apply the daylight status of
+the current system time, not the daylight status of the file time in the
 argument.  Fortunately, the C library C<mktime(3)> function will correctly
 convert the time I<if you correctly set the C<tm_isdst> field of the
 C<struct tm>>.
@@ -1188,228 +1136,272 @@ file determined in the first case above.
 The library implements this solution with checking for the filesystem the file
 is stored under. 
 
-=head2 Summary of stat() problems
+=head2 Further subtleties
 
-That's the end of Jonathan M Gilligan's article.  It should be noted that
+That is the end of Jonathan M Gilligan's article.  It should be noted that
 although the last section, L<"Solutions">, refers to the Win32 API function
-C<GetFileTime()>, his library, the CVSNT code that it was adapted from, and this
-module (which also adapts that code), all use a different Win32 API function
-instead, namely, C<FindFirstFile()>.  As seen in the pseudo-code listing above,
-that is the function used in Microsoft's implementation of C<stat(2)> itself,
-and evidently has one advantage over C<GetFileTime()> which is documented in the
-Microsoft Knowledge Base article 128126 cited above: C<GetFileTime()> gets
-I<cached> UTC times from FAT, whereas C<FindFirstFile()> always reads the time
-from the file.  This means that the value returned by C<GetFileTime()> may be
-incorrect under FAT after a DST season change.
+C<GetFileTime()>, both his library and the CVSNT code that it was adapted from
+use a different Win32 API function instead, namely, C<FindFirstFile()>.  As seen
+in the pseudo-code listing above, that is the function used in Microsoft's
+implementation of C<stat(2)> itself, and evidently has one advantage over
+C<GetFileTime()> that is documented in the Microsoft Knowledge Base article
+128126 cited above: C<GetFileTime()> gets I<cached> UTC times from FAT, whereas
+C<FindFirstFile()> always reads the time from the file.  This means that the
+value returned by C<GetFileTime()> may be incorrect under FAT after a DST season
+change.
+
+That should have been the end of the discussion about the problems with
+Microsoft's implementation of C<stat(2)> and how to overcome them, and, indeed,
+versions of this module before version 1.45 did simply implement one of the
+solutions above (together with another enhancement to Jonathan's library, taken
+from the CVSNT code, to apply the correct daylight saving time rule, rather than
+assuming the United States' rule).
+
+However, it came to my attention those older versions of this module did not
+correctly handle file times on FAT due to a further subtlety in the Win32 API
+function C<FindFirstFile()>.  Recall from above that on FAT, C<FindFirstFile()>
+has to convert the local time stored on the disk to UTC returned by the
+function, and that this conversion was believed to be performed incorrectly when
+the file time concerned is in the opposite DST season to the current system
+time.
+
+This is easily seen by performing a test similar to that at start of Jonathan's
+article above (L<"An example of the problem">).  Create a file called F<file>,
+change the system time to the opposite DST season and then run the program
+below to print out the file's last modification time:
+
+    // test1.c
+    #include <windows.h>
+    #include <stdio.h>
+    void main(void) {
+        HANDLE hndl;
+        WIN32_FIND_DATA wfd;
+        SYSTEMTIME st;
+        if ((hndl = FindFirstFile("file", &wfd)) != INVALID_HANDLE_VALUE &&
+            FileTimeToSystemTime(&wfd.ftLastWriteTime, &st))
+        {
+            printf("Time: %02d/%02d/%04d %02d:%02d:%02d\n",
+                   st.wDay, st.wMonth, st.wYear,
+                   st.wHour, st.wMinute, st.wSecond);
+            CloseHandle(hndl);
+        }
+    }
+
+If this is done on an NTFS drive then the file time displayed will be the
+correct UTC time at which the file was created (last modified).  If it is done
+on a FAT drive then the file time displayed will be wrong by one hour.
+
+That is fine, but notice that in the above sequence of events, the file time is
+only ever set to the current system time.  The subtlety referred to above is
+only seen when the file time was itself set from the opposite DST season.  This
+is only possible programmatically; for example, the program below uses the Win32
+API function C<SetFileTime()> to set the file time to 12:00 Jun 01 2005 UTC:
+
+    // test2.c
+    #include <windows.h>
+    #include <stdio.h>
+    void main(void) {
+        SYSTEMTIME st = { 2005, 6, 0, 1, 12, 0, 0, 0 };
+        FILETIME ft;
+        HANDLE hndl;
+        if (SystemTimeToFileTime(&st, &ft) &&
+            (hndl = CreateFile("file", GENERIC_READ | GENERIC_WRITE,
+                FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
+                0, NULL)) != INVALID_HANDLE_VALUE &&
+            SetFileTime(hndl, NULL, &ft, &ft))
+        {
+            printf("File time has been set to 01/06/2005 12:00:00\n");
+            CloseHandle(hndl);
+        }
+    }
+
+Using a program such as the one above (and varying the file time that it sets as
+necessary) a few simple tests show that the problem with C<FindFirstFile()> on a
+FAT drive actually seems to be this: the file time retrieved is wrong by one
+hour if it was B<set> in the opposite DST season to the current system time.
+
+This, of course, includes the case where (as in <"An example of the problem">) a
+file is created in one DST season and is then read from the opposite DST season
+(for example, create a file in summer (which effectively sets a summer file time
+from summer) and then read it from winter), but it also includes hitherto unseen
+cases in which C<FindFirstFile()> will even return the wrong time for a file
+time in the same DST season as the current system time if the file time was
+B<set> from the opposite DST season to the current system time (for example, set
+a summer file time from winter and then read it from summer).  Also note that,
+in other thus-far unseen cases, C<FindFirstFile()> can return the B<correct>
+time for a file time in the opposite DST season to the current system time if
+the file time was B<set> from the same DST season as the current system time
+(for example, set a winter file time from summer and then read it from summer).
+
+Thus, we appear to be concerned with when the file time was B<set> relative to
+the current system time, rather than what the file time B<is> relative to the
+current system time.  This misunderstanding accounts for some of the test
+failures that versions of this module before version 1.45 exhibited on a FAT
+drive.
+
+Of course, when a given file time was set is not something that can be known at
+a later date because this information is not stored anywhere, which seems to
+make a solution based on C<FindFirstFile()> impossible.  This leads us to look
+to other Win32 API functions for a solution instead.
+
+C<GetFileInformationByHandle()> was already being used in older versions of this
+module in two places: in the replacement C<stat()> function as a fallback in the
+cases (such as a directory specified with a trailing backslash) where
+C<FindFirstFile()> fails, and in the alternative C<alt_stat()> function.  It was
+assumed C<GetFileInformationByHandle()> performed in the same manner as
+C<FindFirstFile()> with respect to how it retrieved and/or converted file times
+on FAT and NTFS drives, and hence the same "corrections" were applied.  However,
+further tests such as above with the program below shows that this is not true.
+
+    // test3.c
+    #include <windows.h>
+    #include <stdio.h>
+    void main(void) {
+        HANDLE hndl;
+        BY_HANDLE_FILE_INFORMATION bhfi;
+        SYSTEMTIME st;
+        if ((hndl = CreateFile("file", GENERIC_READ, FILE_SHARE_READ, NULL,
+                OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL)) !=
+                INVALID_HANDLE_VALUE &&
+            GetFileInformationByHandle(hndl, &bhfi) &&
+            FileTimeToSystemTime(&bhfi.ftLastWriteTime, &st))
+    {
+            printf("Time: %02d/%02d/%04d %02d:%02d:%02d\n",
+                st.wDay, st.wMonth, st.wYear,
+                st.wHour, st.wMinute, st.wSecond);
+            CloseHandle(hndl);
+        }
+    }
+
+Comparing the output of F<test1.c> and F<test3.c> for a test file with its file
+time in each permutation of being B<set from> and being B<in> different DST
+seasons in turn, on both FAT and NTFS drives, it appears that whilst F<test1.c>
+exhibits the strange behaviour described above on FAT and only returns correct
+UTC time reliably on NTFS, F<test3.c> always returns correct UTC time on both
+FAT and NTFS.
+
+Thus, the "corrections" that older versions of this module applied to the file
+times retrieved by B<GetFileInformationByHandle()> should not have been applied,
+which accounts for more of the test failures that those versions exhibited on
+FAT drives.
+
+=head2 The Final Solution
+
+The final solution is thus alarmingly simple, and much simpler than that
+implemented in the library accompanying Jonathan M Gilligan's article and in the
+related CVSNT code: simply use C<GetFileInformationByHandle()> to retrieve the
+last modification time.  It is always correct UTC time on both FAT and NTFS.
 
 Another look at the source for Microsoft's C library shows that everything
 written above regarding the last modification time of a file is also true of the
-last access time and creation time.  This module therefore applies the same
-corrections to those values as well, as does the CVSNT code.
+last access time and creation time, and simple modifications to the test
+programs above also show that C<GetFileInformationByHandle()> always returns
+them correctly too, so this module corrects those values as well in the same
+way.
 
 (Incidentally, the source code of Microsoft's implementation of C<stat(2)> can
 be found in F<C:\Program Files\Microsoft Visual Studio\VC98\CRT\SRC\STAT.C> if
 you installed Microsoft Visual C++ 6.0 in its default location and selected the
 "VC++ Runtime Libraries -E<gt> CRT Source Code" option when installing.)
 
-Another enhancement to Jonathan's library incorporated into this module, taken
-from the CVSNT code, is the use of the Win32 API function
-C<GetTimeZoneInformation()> to apply the correct daylight saving time rule,
-rather than assuming the United States' rule, as hinted at in the L<"Solutions">
-section above.  This is particularly important for residents of the European
-Union, which does actually follow a slightly different rule: summer time (as it
-tends to be known in Europe, rather than daylight saving time) begins at 1:00 AM
-UTC on the last Sunday in March and ends at 1:00 AM UTC on the last Sunday in
-October.
-
-To summarize the quirks of the various file time functions involved, the
-situation is as follows.  Here, "correctly converts" and "incorrectly converts"
-mean "applies a DST correction with respect to the file time being converted"
-and "applies a DST correction with respect to the current system time"
-respectively.
-
-=over 4
-
-=item stat(2)
-
-Returns UTC file times, incorrectly under NTFS.
-
-For NTFS files, it incorrectly converts the UTC file time stored on the disk to
-local time, and then correctly (but too late - the damage is already done!)
-converts that back to UTC.
-
-For FAT files, it incorrectly converts the local file time stored on the disk to
-UTC, then incorrectly converts that back to local time (exactly undoing the
-effect of the first conversion), and finally correctly converts that to UTC.
-
-=item FindFirstFile()
-
-Returns UTC file times, incorrectly under FAT.
-
-For NTFS files, it just returns the UTC file time stored on the disk.
-
-For FAT files, it incorrectly converts the local file time stored on the disk to
-UTC.
-
-=item GetFileTime()
-
-Returns UTC file times, incorrectly under FAT.
-
-For NTFS files, it just returns the UTC file time stored on the disk.
-
-For FAT files, it correctly converts the local file time stored on the disk to
-UTC, but then caches that value until the computer is rebooted.
-
-=item mktime(3)
-
-Converts a local time to UTC.
-
-Whether or not a DST correction is applied depends on the value of the
-C<tm_isdst> field of the C<struct tm> argument: 0 means the local time being
-converted is in standard time so don't apply a correction, E<gt>0 means means it
-is in daylight time so apply a correction, E<lt>0 means have C<mktime(3)> itself
-compute whether or not daylight saving time is in effect (using the United
-States' rule to decide).
-
-=item GetTimeZoneInformation()
-
-Returns information about the current time zone that can be used to determine
-whether or not a given time is in daylight saving time and hence requires a DST
-correction to be applied when converting.
-
-=item FileTimeToLocalFileTime()
-
-Incorrectly converts a UTC file time to local time.
-
-This is the inverse of C<LocalFileTimeToFileTime()>.
-
-=item LocalFileTimeToFileTime()
-
-Incorrectly converts a local file time to UTC.
-
-This is the inverse of C<FileTimeToLocalFileTime()>.
-
-=item __loctotime_t()
-
-Private, undocumented function that correctly converts a local file time to UTC.
-
-This is not the inverse of C<FileTimeToLocalFileTime()>.
-
-=back
-
-Microsoft's implementation of C<stat(2)>, as shown in the pseudo-code listing
-above, is basically:
-
-    FindFirstFile() // calls LocalFileTimeToFileTime() on FAT
-
-    FileTimeToLocalFileTime()
-
-    __loctotime_t()
-
-The solution implemented in the library used by this module is essentially a
-combination of the L<"Solutions"> of the various cases outlined above, but using
-C<FindFirstFile()> rather than C<GetFileTime()> to avoid the caching problem
-under FAT and incorporating the use of C<GetTimeZoneInformation()>:
-
-    FindFirstFile() // calls LocalFileTimeToFileTime() on FAT
-
-    if (IsFATVolume) {
-        FileTimeToLocalFileTime()
-
-        // Now correctly convert local time to UTC using
-        // GetTimeZoneInformation()
-    }
-
 =head2 More problems: utime()
 
 We have been looking at C<stat(2)> in the context of I<getting> various times
-associated with files, so it is natural to wonder whether or not the
-complementary function in this regard, namely C<utime(2)>, which I<sets> file
-times, is afflicted in a similar way.
+associated with files, so it is natural to wonder whether the complementary
+function in this regard, namely C<utime(2)>, which I<sets> file times, is
+afflicted in a similar way.
 
 The answer, unfortunately, is yes.  A look at the source code of Microsoft's
 implementation of C<utime(2)> shows that it puts the supplied last access time
-and last modification time through similar contortions to those in C<stat(2)>
-before storing them in the filesystem.  In a nutshell, it goes something like
-the following:
+and last modification time through similar, though slightly simpler, contortions
+to those in C<stat(2)> before storing them in the filesystem.  Briefly, it goes
+something like the following:
 
-    localtime()
+    // Pseudo-code listing
 
-    LocalFileTimeToFileTime()
+    time_t mod_time;
+    struct tm *local_tmb;
+    SYSTEMTIME local_st;
+    FILETIME local_ft;
+    FILETIME utc_ft;
 
-    SetFileTime()   // calls FileTimeToLocalFileTime() on FAT
+    // Convert UTC time to local time.
+    local_tmb = localtime(mod_time)
 
-For a FAT file, the conversions work like this:
+    // Convert local time to UTC time.
+    // (Construct SYSTEMTIME from struct tm first.)
+    SystemTimeToFileTime(&local_st, &local_ft);
+    LocalFileTimeToFileTime(&local_ft, utc_ft)
 
-=over 4
+    // Set UTC time.
+    SetFileTime(hFile, utc_ft)
 
-=item *
+In versions of this module before version 1.45 it was believed that
+C<SetFileTime()> called C<FileTimeToLocalFileTime()> on FAT drives, thus
+cancelling out the effect of the C<LocalFileTimeToFileTime()> call and yielding
+the correct result but in fact this is not the case, which accounts for the
+remaining test failures that those versions exhibited on FAT drives.
 
-UTC time supplied by the caller is converted to local time by C<localtime(3)>.
-This correctly applies a DST correction according to the DST setting of the
-I<file time being converted>.
+Performing some tests using the following program to set various file times from
+the same or opposite DST season as the file time being set and then reading
+back the file times that were actually using F<test3.c> above (which is believed
+always to return the correct file time), we can observe that F<test4.c> always
+sets the file time wrongly (by one hour) if the file time being set is in the
+opposite DST season to the current system time, and it always sets the file time
+correctly if the file time being set is in the same DST season to the current
+system time.  This is true on both FAT and NTFS drives.
 
-=item *
-
-Local time is converted UTC by C<LocalFileTimeToFileTime()>.  Note that this
-I<does not> reverse the effect of the previous step because in this step we use
-the DST setting of the I<current system time>, not the file time.
-
-=item *
-
-UTC is converted to local time by C<FileTimeToLocalFileTime()>.  Note that this
-exactly reverses the effect of the previous step, so we are left with the
-correct local time to store in the filesystem.
-
-=back
-
-For an NTFS file, the conversions work like this:
-
-=over 4
-
-=item *
-
-UTC time supplied by the caller is converted to local time by C<localtime(3)>.
-This correctly applies a DST correction according to the DST setting of the
-I<file time being converted>.
-
-=item *
-
-Local time is converted UTC by C<LocalFileTimeToFileTime()>.  Note that this
-I<does not> reverse the effect of the previous step because in this step we use
-the DST setting of the I<current system time>, not the file time.
-
-=item *
-
-UTC is stored in the filesystem.
-
-=back
-
-We therefore have a situation very similar to that for C<stat(2)>: under FAT,
-three conversions are applied, two of which cancel each other out, leaving the
-UTC file times supplied correctly converted to local time; under NTFS two
-conversions are applied which are not the exact inverses of each other, leaving
-the UTC file times supplied potentially wrong by one hour.
-
-Thus, the time set by C<utime(2)> for a file on an NTFS volume is incorrect by
-an hour when the time being set is in a different DST season to the current
-system time.  Times set by C<utime(2)> on FAT volumes are stable across DST
-seasons.
-
-The solution to this mess implemented by this module is similar to the solution
-to the C<stat(2)> mess: do the conversions "correctly", and arrange for the
-"incorrect" conversion that is apparently done implicitly by the Win32 API
-function involved (in this case, C<SetFileTime()>) under FAT to be cancelled
-out:
-
-    if (IsFATVolume) {
-        // Correctly convert UTC to local time using
-        // GetTimeZoneInformation(), then:
-
-        LocalFileTimeToFileTime()
+    // test4.c
+    #include <windows.h>
+    #include <stdio.h>
+    #include <time.h>
+    #include <sys/utime.h>
+    static BOOL _FileTimeToUnixTime(const FILETIME *ft, time_t *ut);
+    void main(void) {
+        SYSTEMTIME st = { 2005, 6, 0, 1, 12, 0, 0, 0 };
+        FILETIME ft;
+        time_t ut;
+        struct utimbuf utb;
+        if (SystemTimeToFileTime(&st, &ft) &&
+            _FileTimeToUnixTime(&ft, &ut) &&
+            (utb.actime = utb.modtime = ut) &&
+            utime("file", &utb) != -1)
+        {
+            printf("File time has been set to 01/06/2005 12:00:00\n");
+        }
+    }
+    static BOOL _FileTimeToUnixTime(const FILETIME *ft, time_t *ut) {
+        SYSTEMTIME basest = { 1970, 1, 0, 1, 0, 0, 0, 0 };
+        FILETIME baseft;
+        ULARGE_INTEGER it;
+        ULONGLONG clunks_per_second = 10000000L;
+        if (!SystemTimeToFileTime(&basest, &baseft))
+            return FALSE;
+        it.QuadPart  = ((ULARGE_INTEGER *)ft)->QuadPart;
+        it.QuadPart -= ((ULARGE_INTEGER *)&baseft)->QuadPart;
+        it.QuadPart /= clunks_per_second;
+        *ut = it.LowPart;
+        return TRUE;
     }
 
-    SetFileTime()   // calls FileTimeToLocalFileTime() on FAT
+The reason for this behaviour is simply that the C<localtime(3)> call in
+Microsoft's implementation of C<utime(2)> shown above converts the time
+correctly, while the later C<LocalFileTimeToFileTime()> call does not.  The
+final <SetFileTime()> call then behaves correctly on both FAT and NTFS, just as
+C<GetFileInformationByHandle()> was found to do further above.
+
+We therefore have a situation slightly simpler than that for C<stat(2)>: under
+both FAT and NTFS, two conversions are applied that are not the exact inverses
+of each other, leaving the UTC file times supplied potentially wrong by one
+hour.
+
+Thus, the time set by C<utime(2)> for a file on either a FAT or an NTFS volume
+is incorrect by an hour when the time being set is in a different DST season to
+the current system time.
+
+The solution to this problem implemented by this module is as simple as that to
+the C<stat(2)> problem: just use the appropriate Win32 API function instead (in
+this case, C<SetFileTime()>).
 
 =head1 EXPORTS
 
@@ -1453,9 +1445,9 @@ Microsoft Knowledge Base article Q158588 cited above specifically mentions that
 the behaviour of C<GetFileTime()> under FAT may be changed to match the
 behaviour under NTFS in a future version of Windows NT.  That particular change,
 however, would have no effect on this module because, as mentioned above,
-C<GetFileTime()> isn't used by it.)
+C<GetFileTime()> is not used by it.)
 
-Likewise, if corrections such as those applied by this module are ever
+Likewise, if corrections such as those applied by this module were ever
 incorporated into the Perl core (so that Perl's built-in C<stat()>, C<lstat()>
 and C<utime()> functions get/set correct UTC values themselves, even when built
 on the faulty Microsoft C library functions) then again, the corrections applied
@@ -1466,57 +1458,9 @@ even become redundant.
 
 =back
 
-=head1 LIMITATIONS
-
-=over 4
-
-=item *
-
-As seen from the pseudo-code above, when handling files on FAT volumes, this
-module's replacement functions all use the Win32 API function
-C<GetTimeZoneInformation()> to figure out what the appropriate DST rule is.  The
-information returned by that function can either be in "absolute" format (in
-which the transition dates between standard time and daylight time are given by
-exact dates and times, including the year) or in "day-in-month" format (in which
-those transition dates are given in such a way that clues like "the first Sunday
-in April" can be expressed, and no specific year is mentioned).  Only the
-"day-in-month" format is handled by this module; the functions throw exceptions
-if the transition dates are returned in "absolute" format.
-
-=back
-
-=head1 TODO
-
-=over 4
-
-=item *
-
-The code that determines what filesystem a given path is on doesn't currently
-handle I<volume mount points> that are supported by NTFS 5.0 (Windows 2000) and
-later.  A volume mount point is a directory on one volume in which a different
-volume is mounted.  For example, it is possible to mount the F<D:> drive in the
-directory F<C:\mnt\d-drive> and thereafter refer to files on the F<D:> drive as
-being in the F<C:\mnt\d-drive> directory.
-
-The code will presently determine the filesystem of paths in that location
-according to the filesystem of the F<C:> drive, but that may not be correct: The
-F<D:> drive could be a different filesystem.  Instead, the code should retrieve
-the volume mount point (in this case, F<C:\mnt\d-drive>) using
-C<GetVolumePathName()>, then get the name of the corresponding volume (in this
-case, F<D:>) using C<GetVolumeNameForVolumeMountPoint()>, and finally determine
-the filesystem from that (using C<GetVolumeInformation()> as it currently does).
-
-Such an improvement will need to contend with the fact that
-C<GetVolumePathName()> and C<GetVolumeNameForVolumeMountPoint()> are only
-supported on Windows 2000 and later, and require the C<_WIN32_WINNT> macro to be
-defined as 0x0500 or later when building, but we would, of course, not want to
-remove backwards compatibility with earlier OS's.
-
-=back
-
 =head1 FEEDBACK
 
-Patches, bug reports, suggestions or any other feedback are welcome.
+Patches, bug reports, suggestions or any other feedback is welcome.
 
 Bugs can be reported on the CPAN Request Tracker at
 F<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Win32-UTCFileTime>.
@@ -1553,7 +1497,7 @@ to it in the L<"BACKGROUND REFERENCE"> section of this manpage.
 
 Credit is also due to Slaven Rezic for finding Jonathan's work on the Code
 Project website (F<http://www.codeproject.com/>) in response to my bug report
-(ticket #18513 on the Perl Bugs website, F<http://bugs.perl.org/>).
+([perl #18513] on the Perl Bugs website, F<http://bugs.perl.org/>).
 
 The custom C<import()> method is based on that in the standard library module
 File::Glob (version 1.01), written by Nathan Torkington and others.
@@ -1584,7 +1528,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2003-2005 Steve Hay.  All rights reserved.
+Copyright (C) 2003-2006 Steve Hay.  All rights reserved.
 
 Portions Copyright (C) 2001 Jonathan M Gilligan.  Used with permission.
 
@@ -1598,11 +1542,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.44
+Version 1.45
 
 =head1 DATE
 
-02 Sep 2005
+14 Feb 2006
 
 =head1 HISTORY
 

@@ -7,7 +7,7 @@
 #   Test script to check getting info for various directory names.
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -20,7 +20,7 @@ use 5.006000;
 use strict;
 use warnings;
 
-use File::Spec;
+use File::Spec::Functions qw(curdir rel2abs splitpath);
 use Test::More tests => 22;
 
 #===============================================================================
@@ -36,8 +36,8 @@ BEGIN {
 #===============================================================================
 
 MAIN: {
-    my $dir   =  File::Spec->rel2abs(File::Spec->curdir());
-    my $drive = (File::Spec->splitpath($dir))[0];
+    my $dir   = rel2abs(curdir());
+    my $drive = (splitpath($dir))[0];
 
     my(@stats, $errno, $lasterror);
 

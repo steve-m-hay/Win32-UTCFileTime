@@ -1,16 +1,17 @@
-name: Win32-UTCFileTime
-version: 1.44
 abstract: Get/set UTC file times with stat/utime on Win32
 author: Steve Hay <shay@cpan.org>
-license: perl
-distribution_type: module
 build_requires:
   Test::More: 0
-requires:
-  perl: 5.6.0
-recommends:
-  Test::Pod: 1.00
+distribution_type: module
+generated_by: Module::Install version 0.56
+license: perl
+name: Win32-UTCFileTime
 no_index:
   directory:
     - inc
-generated_by: Module::Install version 0.37
+    - t
+recommends:
+  Test::Pod: 1.00
+requires:
+  perl: 5.6.0
+version: 1.45

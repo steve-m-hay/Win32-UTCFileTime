@@ -7,7 +7,7 @@
 #   Test script to check getting/setting directory times.
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -46,11 +46,11 @@ MAIN: {
     ($errno, $lasterror) = ($!, $^E);
     ok(scalar @stats, 'stat() returns OK') or
         diag("\$! = '$errno', \$^E = '$lasterror'");
-    # Don't check $stats[8] (last access time): not stored on FAT.
+    # Do not check $stats[8] (last access time): not stored on FAT.
     # Allow for 2 second granularity on FAT.
     cmp_ok(abs($time - $stats[9]), '<', 3,
            '... and gets mtime correctly: ' . scalar gmtime $stats[9]);
-    # Don't check $stats[10] (creation time): often gets cached value.
+    # Do not check $stats[10] (creation time): often gets cached value.
 
     rmdir $dir or die "Can't delete directory '$dir': $!\n" if -e $dir;
     mkdir $dir or die "Can't create directory '$dir': $!\n";
@@ -59,11 +59,11 @@ MAIN: {
     ($errno, $lasterror) = ($!, $^E);
     ok(scalar @lstats, 'lstat() returns OK') or
         diag("\$! = '$errno', \$^E = '$lasterror'");
-    # Don't check $lstats[8] (last access time): not stored on FAT.
+    # Do not check $lstats[8] (last access time): not stored on FAT.
     # Allow for 2 second granularity on FAT.
     cmp_ok(abs($time - $lstats[9]), '<', 3,
            '... and gets mtime correctly: ' . scalar gmtime $lstats[9]);
-    # Don't check $lstats[10] (creation time): often gets cached value.
+    # Do not check $lstats[10] (creation time): often gets cached value.
 
     rmdir $dir or die "Can't delete directory '$dir': $!\n" if -e $dir;
     mkdir $dir or die "Can't create directory '$dir': $!\n";
@@ -72,11 +72,11 @@ MAIN: {
     ($errno, $lasterror) = ($!, $^E);
     ok(scalar @alt_stats, 'alt_stat() returns OK') or
         diag("\$! = '$errno', \$^E = '$lasterror'");
-    # Don't check $alt_stats[8] (last access time): not stored on FAT.
+    # Do not check $alt_stats[8] (last access time): not stored on FAT.
     # Allow for 2 second granularity on FAT.
     cmp_ok(abs($time - $alt_stats[9]), '<', 3,
            '... and gets mtime correctly: ' . scalar gmtime $alt_stats[9]);
-    # Don't check $alt_stats[10] (creation time): often gets cached value.
+    # Do not check $alt_stats[10] (creation time): often gets cached value.
 
     rmdir $dir or die "Can't delete directory '$dir': $!\n" if -e $dir;
     mkdir $dir or die "Can't create directory '$dir': $!\n";
@@ -91,25 +91,25 @@ MAIN: {
             diag("\$! = '$errno', \$^E = '$lasterror'");
 
         @stats = stat $dir;
-        # Don't check $stats[8] (last access time): not stored on FAT.
+        # Do not check $stats[8] (last access time): not stored on FAT.
         # Allow for 2 second granularity on FAT.
         cmp_ok(abs($utime - $stats[9]), '<', 3,
                '... and sets mtime correctly according to stat()');
-        # Don't check $stats[10] (creation time): not set by utime().
+        # Do not check $stats[10] (creation time): not set by utime().
 
         @lstats = lstat $dir;
-        # Don't check $lstats[8] (last access time): not stored on FAT.
+        # Do not check $lstats[8] (last access time): not stored on FAT.
         # Allow for 2 second granularity on FAT.
         cmp_ok(abs($utime - $lstats[9]), '<', 3,
                '... and sets mtime correctly according to lstat()');
-        # Don't check $lstats[10] (creation time): not set by utime().
+        # Do not check $lstats[10] (creation time): not set by utime().
 
         @alt_stats = Win32::UTCFileTime::alt_stat($dir);
-        # Don't check $alt_stats[8] (last access time): not stored on FAT.
+        # Do not check $alt_stats[8] (last access time): not stored on FAT.
         # Allow for 2 second granularity on FAT.
         cmp_ok(abs($utime - $alt_stats[9]), '<', 3,
                '... and sets mtime correctly according to alt_stat()');
-        # Don't check $alt_stats[10] (creation time): not set by utime().
+        # Do not check $alt_stats[10] (creation time): not set by utime().
     }
 
     rmdir $dir;

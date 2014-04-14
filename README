@@ -1,6 +1,6 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.44
+                        Win32::UTCFileTime, Version 1.45
 ________________________________________________________________________________
 
 NAME
@@ -26,9 +26,9 @@ SYNOPSIS
 DESCRIPTION
 
     This module provides replacements for Perl's built-in stat() and utime()
-    functions which respectively get and set "correct" UTC file times, instead
-    of the erroneous values read and written by Microsoft's implementation of
-    stat(2) and utime(2) which Perl's built-in functions inherit on Win32 when
+    functions that respectively get and set "correct" UTC file times instead of
+    the erroneous values read and written by Microsoft's implementation of
+    stat(2) and utime(2), which Perl's built-in functions inherit on Win32 when
     built with the Microsoft C library.
 
 INSTALLATION
@@ -37,7 +37,7 @@ INSTALLATION
 
 COPYRIGHT
 
-    Copyright (C) 2003-2005 Steve Hay.  All rights reserved.
+    Copyright (C) 2003-2006 Steve Hay.  All rights reserved.
     Portions Copyright (C) 2001 Jonathan M Gilligan.  Used with permission.
     Portions Copyright (C) 2001 Tony M Hoyle.  Used with permission.
 

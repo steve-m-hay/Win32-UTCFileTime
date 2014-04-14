@@ -7,7 +7,7 @@
 #   Test script to check default arguments.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -46,7 +46,7 @@ MAIN: {
     $_ = $file;
     @stats2 = Win32::UTCFileTime::stat;
 
-    is($_, $file, "stat() doesn't change \$_");
+    is($_, $file, "stat() does not change \$_");
     is_deeply(\@stats2, \@stats1,
        '... and gets the same results as stat($file)');
 
@@ -54,7 +54,7 @@ MAIN: {
     $_ = $file;
     @stats2 = Win32::UTCFileTime::lstat;
 
-    is($_, $file, "lstat() doesn't change \$_");
+    is($_, $file, "lstat() does not change \$_");
     is_deeply(\@stats2, \@stats1,
        '... and gets the same results as lstat($file)');
 
@@ -62,7 +62,7 @@ MAIN: {
     $_ = $file;
     @stats2 = Win32::UTCFileTime::alt_stat;
 
-    is($_, $file, "alt_stat() doesn't change \$_");
+    is($_, $file, "alt_stat() does not change \$_");
     is_deeply(\@stats2, \@stats1,
        '... and gets the same results as alt_stat($file)');
 

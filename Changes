@@ -1,9 +1,62 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.44
+                        Win32::UTCFileTime, Version 1.45
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.45 14 Feb 2006
+
+    - Fixed all the functions so that they work correctly on FAT drives.
+
+      Previous versions of this module made some erroneous assumptions about the
+      behaviour of certain Win32 API functions that were used in the solutions
+      implemented here, leading to incorrect behaviour on FAT drives.  In fact,
+      the test suite did not even pass all tests on FAT drives.
+
+      The new solutions are much simpler, and all tests now pass on both NTFS
+      and FAT drives, on Windows NT 4.0 Workstation, Windows 2000 Professional
+      and Windows XP Professional (at least).
+
+      Many thanks to Wayne Scott <wsc9tt@gmail.com> for drawing attention to
+      these errors and for suggesting what the correct solution is.
+
+    - Fixes for building with Borland C++:
+
+      * Used <dos.h> instead of <direct.h> for the declaration of _getdrive();
+
+      * Added definition of _dev_t, which Borland C++ omits;
+
+      * Skipped some directory mode tests because Borland's stat(2) sets the
+        mode differently to Microsoft's stat(2), emulated by alt_stat().
+
+      This module should now build (and test) cleanly with Perls built using
+      Borland C++ and dmake.
+
+    - Changed various "use MODULE;" lines to be explicit about what is being
+      imported, and in particular to not import things that are not required.
+
+    - Updated Module::Install::PRIVATE to version 1.04 for Makefile.PL
+      improvements:
+
+      * Fixed the handling of user-input relative directory paths so that they
+        are converted to absolute paths before use in case the Makefile.PL has
+        changed to another directory in the meantime.
+
+      * Renamed lots of methods for a better naming convention.
+
+    - Updated Module::Install components from version 0.56 of that distribution.
+      This includes Module::AutoInstall, which supersedes ExtUtils::AutoInstall.
+      Changed Makefile.PL appropriately to take advantage of the new features.
+
+    - Updated ppport.h using version 3.08 of the Devel::PPPort distribution.
+
+    - Modified PREOP key in the dist option in Makefile.PL to ensure files are
+      all Windows end-of-line format.
+
+    - Corrected spelling mistakes and improved the grammar in some of the
+      documentation.
 _________________
 
 v1.44 02 Sep 2005
@@ -16,15 +69,15 @@ v1.44 02 Sep 2005
 
       * Relaxed the compiler version checking so that only the major version
         numbers have to match (and also the minor version numbers for VC++ 7 and
-        later which use CRT DLL's named msvcr70.dll, msvcr71.dll, etc);
+        later, which use CRT DLL's named msvcr70.dll, msvcr71.dll, etc)
         
         (Thanks to Sisyphus <sisyphus1@optusnet.com.au> for drawing attention to
-        this problem via the PAR mailing list (par@perl.org).)
+        this problem via the PAR mailing list (par@perl.org));
 
-      * Fixed the parsing of bcc32's output as per perl #24855.
+      * Fixed the parsing of bcc32's output as per perl change #24855.
 
     - Dropped the use of I<> for Perl variables in POD, in line with changes
-      made (some time ago) to the perlpod manpage (perl #12542).
+      made (some time ago) to the perlpod manpage (perl change #12542).
 
     - Corrected spelling mistake: INITIALISATION should be INITIALIZATION.
 
@@ -38,7 +91,7 @@ v1.43 01 Jun 2005
       improvements:
 
       * ExtUtils::AutoInstall command-line options are now better supported,
-        fixing problems with custom option handling that didn't recognize them;
+        fixing problems with custom option handling that did not recognize them;
 
       * Errors now croak() rather than die() so that the error messages look a
         little more friendly;
@@ -60,7 +113,7 @@ v1.42 03 Mar 2005
       * Added code to try to check that on Win32 the same compiler is being used
         to build this module as was used to build Perl itself to avoid problems
         with binaries built by different compiler versions loading different C
-        runtime DLL's.
+        run-time DLL's.
 
     - Added a recommendation for Test::Pod to Makefile.PL to test the POD when
       building these modules.  Included ExtUtils::AutoInstall to facilitate
@@ -127,7 +180,7 @@ v1.33 08 Aug 2004
 
     - Added a check to the return value from the _get_osfhandle() call in the
       _SetUTCFileTimes() C function (used by the replacement utime() function)
-      so that we don't try to continue with an invalid handle.
+      so that we do not try to continue with an invalid handle.
 
     - Also added an extra attempt at continuing in the above scenario by closing
       the previously opened file descriptor and trying to open an operating-
@@ -141,10 +194,10 @@ v1.33 08 Aug 2004
       Visual C++ Toolkit 2003 compiler in conjunction with a Perl (e.g.
       ActivePerl Build 810) that was built using Visual C++ 6.0.  (Passing file
       descriptors, errno and other CRT resources between the msvcr71.dll and
-      msvcrt.dll C runtime libraries used by those compilers respectively
-      doesn't work.)
+      msvcrt.dll C run-time libraries used by those compilers respectively does
+      not work.)
 
-      Using such mismatched C runtimes, however, has to be seen as undesirable
+      Using such mismatched C run-times, however, has to be seen as undesirable
       and may not always work.
 
       Added a note to the INSTALL file that if possible the same compiler should
@@ -191,7 +244,7 @@ v1.31 26 Feb 2004
     - Use Module::Install as a front-end to ExtUtils::MakeMaker.  The same build
       script can also be used as a front-end to Module::Build in due course
       (once problems building XS modules with Module::Build are ironed out), and
-      it also creates a META.yml file that contains a "license" key which
+      it also creates a META.yml file that contains a "license" key, which
       http://search.cpan.org/ makes use of.
 
     - Added new test to check for POD errors if Test::Pod is available.
@@ -210,8 +263,8 @@ v1.30 22 Feb 2004
     - Moved installation instructions to a separate INSTALL file.
 
     - Added PREOP to the dist option in Makefile.PL to ensure permissions are
-      set correctly within the distdir (since they often aren't set correctly in
-      the top-level directory when working on Windows) to stop CPANTS from
+      set correctly within the distdir (since they often are not set correctly
+      in the top-level directory when working on Windows) to stop CPANTS from
       complaining about bad permissions.
 
     - Added COMPRESS (and SUFFIX) and ZIPFLAGS to the dist option in Makefile.PL
@@ -251,8 +304,8 @@ v1.20 24 Sep 2003
       platforms for root (drive or UNC) directories, and for directories
       specified with a trailing slash or backslash.
 
-    - Improved the detection of the filesystem when determining whether or not
-      it stores UTC file times.
+    - Improved the detection of the filesystem when determining whether it
+      stores UTC file times.
 
     - Cached the conversion of the base SYSTEMTIME to FILETIME for a minor
       speed-up.
@@ -266,7 +319,7 @@ v1.20 24 Sep 2003
     - Renamed some functions in the XS and C code.
 
     - Reverted the typemap for "const char *" back to the default T_PV.  There
-      didn't seem to be any point in the custom typemap.
+      did not seem to be any point in the custom typemap.
 
     - Changed tabs to spaces (via "expand -t 4 infile > outfile") to avoid
       irritation when switching between editors that use 4- or 8-space tabs.
