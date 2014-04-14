@@ -21,7 +21,7 @@ use strict;
 use warnings;
 
 use Config;
-use ExtUtils::MakeMaker;
+use inc::Module::Install;
 
 #===============================================================================
 # INITIALISATION
@@ -38,27 +38,22 @@ BEGIN {
 #===============================================================================
 
 MAIN: {
+    name           ('Win32-UTCFileTime');
+    abstract       ('Get/set UTC file times with stat/utime on Win32');
+    version_from   ('lib/Win32/UTCFileTime.pm');
+    author         ('Steve Hay <shay@cpan.org>');
+    license        ('perl');
+    perl_version   (5.006000);
+    requires       ('Carp');
+    requires       ('Exporter');
+    requires       ('XSLoader');
+    build_requires ('File::Copy');
+    build_requires ('File::Spec');
+    build_requires ('Test');
+    recommends     ('Test::Pod' => 1.00);
+    clean_files    ('const-c.inc const-xs.inc');
+
     WriteMakefile(
-        NAME          => 'Win32::UTCFileTime',
-
-        ABSTRACT_FROM => 'lib/Win32/UTCFileTime.pm',
-
-        VERSION_FROM  => 'lib/Win32/UTCFileTime.pm',
-
-        AUTHOR        => 'Steve Hay <shay@cpan.org>',
-
-        PREREQ_PM => {
-            Carp         => 0,
-            Exporter     => 0,
-            'File::Spec' => 0,          # Only used by test suite
-            Test         => 0,          # Only used by test suite
-            XSLoader     => 0
-        },
-
-        clean => {
-            FILES   => 'const-c.inc const-xs.inc'
-        },
-
         dist => {
             DIST_CP  => 'cp',
             PREOP    => 'chmod -R a-x+rwX,go-w $(DISTVNAME)',

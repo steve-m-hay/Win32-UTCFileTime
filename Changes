@@ -1,9 +1,20 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.30
+                        Win32::UTCFileTime, Version 1.31
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.31 26 Feb 2004
+
+    - Use Module::Install as a front-end to ExtUtils::MakeMaker.  The same build
+      script can also be used as a front-end to Module::Build in due course
+      (once problems building XS modules with Module::Build are ironed out), and
+      it also creates a META.yml file that contains a "license" key which
+      http://search.cpan.org/ makes use of.
+
+    - Added new test to check for POD errors if Test::Pod is available.
 _________________
 
 v1.30 22 Feb 2004

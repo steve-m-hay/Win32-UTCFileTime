@@ -12,6 +12,11 @@ typemap
 UTCFileTime.xs
 fallback/const-c.inc
 fallback/const-xs.inc
+inc/Module/Install.pm
+inc/Module/Install/Base.pm
+inc/Module/Install/Makefile.pm
+inc/Module/Install/MakeMaker.pm
+inc/Module/Install/Metadata.pm
 lib/Win32/UTCFileTime.pm
 t/01_file_times.t
 t/02_dir_times.t
@@ -22,3 +27,4 @@ t/06_dir_misc.t
 t/07_dir_name.t
 t/08_default_arg.t
 t/09_debug.t
+t/10_pod.t

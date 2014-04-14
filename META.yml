@@ -1,15 +1,21 @@
-# http://module-build.sourceforge.net/META-spec.html
-#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
-name:         Win32-UTCFileTime
-version:      1.30
-version_from: lib/Win32/UTCFileTime.pm
-installdirs:  site
-requires:
-    Carp:                          0
-    Exporter:                      0
-    File::Spec:                    0
-    Test:                          0
-    XSLoader:                      0
-
+name: Win32-UTCFileTime
+version: 1.31
+abstract: Get/set UTC file times with stat/utime on Win32
+author: Steve Hay <shay@cpan.org>
+license: perl
 distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.17
+build_requires:
+  File::Copy: 0
+  File::Spec: 0
+  Test: 0
+requires:
+  perl: 5.6.0
+  Carp: 0
+  Exporter: 0
+  XSLoader: 0
+recommends:
+  Test::Pod: 1
+no_index:
+  directory:
+    - inc
+generated_by: Module::Install version 0.32

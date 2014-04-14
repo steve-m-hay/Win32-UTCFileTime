@@ -50,7 +50,7 @@ BEGIN {
         alt_stat
     );
     
-    $VERSION = '1.30';
+    $VERSION = '1.31';
 }
 
 # Boolean debug setting.
@@ -1471,11 +1471,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Win32::UTCFileTime, Version 1.30
+Win32::UTCFileTime, Version 1.31
 
 =head1 DATE
 
-22 February 2004
+26 February 2004
 
 =head1 HISTORY
 
