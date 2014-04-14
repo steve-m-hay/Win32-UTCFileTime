@@ -7,7 +7,7 @@
 #   Win32.
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2008, 2012 Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2008, 2012-2013 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -51,7 +51,7 @@ BEGIN {
         alt_stat
     );
     
-    $VERSION = '1.55';
+    $VERSION = '1.56';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -67,7 +67,7 @@ our $Try_Alt_Stat = 0;
 # PUBLIC API
 #===============================================================================
 
-# Autoload the SEM_* flags from the constant() XS fuction.
+# Autoload the SEM_* flags from the constant() XS function.
 
 sub AUTOLOAD {
     our $AUTOLOAD;
@@ -1534,7 +1534,7 @@ Steve Hay E<lt>shay@cpan.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2003-2008, 2012 Steve Hay.  All rights reserved.
+Copyright (C) 2003-2008, 2012-2013 Steve Hay.  All rights reserved.
 
 Portions Copyright (C) 2001 Jonathan M Gilligan.  Used with permission.
 
@@ -1548,11 +1548,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.55
+Version 1.56
 
 =head1 DATE
 
-20 Mar 2012
+08 Jul 2013
 
 =head1 HISTORY
 

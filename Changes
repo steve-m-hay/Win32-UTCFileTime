@@ -1,9 +1,15 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.55
+                        Win32::UTCFileTime, Version 1.56
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.56 08 Jul 2013
+
+    - Corrected typo in a comment.  (Fixes [cpan #86749].  Thanks to
+      <dsteinbrunner@pobox.com> for the patch.) 
 _________________
 
 v1.55 20 Mar 2012
