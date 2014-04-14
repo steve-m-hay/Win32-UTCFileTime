@@ -7,7 +7,7 @@
 #   Makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2006 Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2008 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -31,8 +31,8 @@ use File::Spec::Functions qw(catfile updir);
 
 BEGIN {
     unless ($^O =~ /MSWin32/i) {
-        die qq{This module requires a "native" (i.e. non-Cygwin) Microsoft } .
-            qq{Windows platform.\n};
+        die qq{OS unsupported: This module requires a "native" } .
+            qq{(i.e. non-Cygwin) Microsoft Windows platform.\n};
     }
 }
 

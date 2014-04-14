@@ -1,9 +1,17 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.46
+                        Win32::UTCFileTime, Version 1.47
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.47 30 Jun 2008
+
+    - Added the magic "OS unsupported" phrase to Makefile.PL's die() message so
+      that CPAN Testers report "N/A" rather than "FAIL" on non-Win32 OSes.
+
+    - Updated ppport.h using version 3.14 of the Devel::PPPort distribution.
 _________________
 
 v1.46 10 Jul 2007
