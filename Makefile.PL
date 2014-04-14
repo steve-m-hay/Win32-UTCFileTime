@@ -7,7 +7,7 @@
 #   Makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2008 Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2008, 2012 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -58,6 +58,7 @@ MAIN: {
     configure_requires ('Getopt::Long');
     configure_requires ('Pod::Usage');
     configure_requires ('Text::Wrap');
+    configure_requires ('parent');
     configure_requires ('strict');
     configure_requires ('vars');
     configure_requires ('warnings');

@@ -462,11 +462,11 @@ static BOOL Win32UTCFileTime_SetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
     }
     else if ((hndl = (HANDLE)_get_osfhandle(fd)) == INVALID_HANDLE_VALUE) {
         /* If Perl is linked against the OS's msvcrt.dll and this module is
-         * linked against a recent Visual C compiler's msvcrXX.dll then the file
-         * descriptor obtained by the former via PerlLIO_open() cannot be used
-         * by the latter, so _get_osfhandle() will fail.  In case that was the
-         * cause of the failure, we close the file descriptor and try the Win32
-         * API function CreateFile() directly instead. */
+         * linked against a recent Visual C++ compiler's msvcrXX.dll then the
+         * file descriptor obtained by the former via PerlLIO_open() cannot be
+         * used by the latter, so _get_osfhandle() will fail.  In case that was
+         * the cause of the failure, we close the file descriptor and try the
+         * Win32 API function CreateFile() directly instead. */
         if (PerlLIO_close(fd) < 0)
             warn("Can't close file descriptor '%d' for file '%s': %s",
                  fd, name, WIN32_UTCFILETIME_SYS_ERR_STR);
