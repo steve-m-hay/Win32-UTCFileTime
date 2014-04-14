@@ -1,9 +1,40 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.32
+                        Win32::UTCFileTime, Version 1.33
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.33 08 Aug 2004
+
+    - Added a check to the return value from the _get_osfhandle() call in the
+      _SetUTCFileTimes() C function (used by the replacement utime() function)
+      so that we don't try to continue with an invalid handle.
+
+    - Also added an extra attempt at continuing in the above scenario by closing
+      the previously opened file descriptor and trying to open an operating-
+      system file handle directly instead, and modified the similar existing
+      case intended to cover directories to always retry rather than only when
+      errno was set to EACCES because (a) the debug message was misleading
+      (errno is set to EACCES for read-only files too) and (b) errno is not
+      always reliably set (see below).
+
+      This module now appears to function correctly when built using the free
+      Visual C++ Toolkit 2003 compiler in conjunction with a Perl (e.g.
+      ActivePerl Build 810) that was built using Visual C++ 6.0.  (Passing file
+      descriptors, errno and other CRT resources between the msvcr71.dll and
+      msvcrt.dll C runtime libraries used by those compilers respectively
+      doesn't work.)
+
+      Using such mismatched C runtimes, however, has to be seen as undesirable
+      and may not always work.
+
+      Added a note to the INSTALL file that if possible the same compiler should
+      be used to build this module as was used to build Perl itself.
+
+      Thanks to Robert Rothenberg <rrwo@cpan.org> for drawing attention to this
+      problem via CPAN Testers (http://testers.cpan.org/).
 _________________
 
 v1.32 01 Aug 2004

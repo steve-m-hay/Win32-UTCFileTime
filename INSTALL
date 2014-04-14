@@ -1,6 +1,6 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.32
+                        Win32::UTCFileTime, Version 1.33
 ________________________________________________________________________________
 
 INSTALLATION
@@ -18,6 +18,16 @@ INSTALLATION
     Perl type the following:
 
         perl -V:make
+
+    Note that you should try to use the same compiler to build this module as
+    was used to build your Perl itself.
+
+    In particular, linking against the msvcrt.lib import library that comes with
+    recent versions of the Microsoft Visual C++ compiler (version 7 and above)
+    now produces binaries that depend on compiler-specific DLL's named
+    msvcr70.dll, msvcr71.dll, etc, rather than the OS's msvcrt.dll.  This module
+    may not work correctly if you build it with a different compiler than was
+    used to build your Perl such that two different C runtime DLL's get loaded.
 
 PREREQUISITES
 

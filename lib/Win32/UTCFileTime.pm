@@ -50,7 +50,7 @@ BEGIN {
         alt_stat
     );
     
-    $VERSION = '1.32';
+    $VERSION = '1.33';
 }
 
 # Boolean debug setting.
@@ -554,23 +554,29 @@ classified as follows (a la L<perldiag>):
 
 =over 4
 
-=item Can't close file object handle for file '%s' after reading: %s
+=item Can't close file descriptor '%d' for file '%s': %s
 
-(W) The file object handle for the specified file opened by a call to the Win32
-API function C<CreateFile()> within C<stat()>, C<lstat()> or C<alt_stat()>
-could not be closed after reading file information from it.
+(W) The specified file descriptor for the specified file opened by a call to the
+standard C library function C<open(2)> within C<utime()> could not be closed
+after failing to obtain the associated operating-system file handle from it.
 
-=item Can't close file object handle for file '%s' after updating: %s
+=item Can't close file object handle '%lu' for file '%s' after reading: %s
 
-(W) The file object handle for the specified file opened by a call to the Win32
-API function C<CreateFile()> or C<_get_osfhandle()> within C<utime()> could not
-be closed after updating the file times using it.
+(W) The specified file object handle for the specified file opened by a call to
+the Win32 API function C<CreateFile()> within C<stat()>, C<lstat()> or
+C<alt_stat()> could not be closed after reading file information from it.
 
-=item Can't close file search handle for file '%s' after reading: %s
+=item Can't close file object handle '%lu' for file '%s' after updating: %s
 
-(W) The file search handle for the specified file opened by a call to the Win32
-API function C<FindFirstFile()> within C<stat()> or C<lstat()> could not be
-closed after reading file information from it.
+(W) The specified file object handle for the specified file opened by a call to
+the Win32 API function C<CreateFile()> or C<_get_osfhandle()> within C<utime()>
+could not be closed after updating the file times using it.
+
+=item Can't close file search handle '%lu' for file '%s' after reading: %s
+
+(W) The specified file search handle for the specified file opened by a call to
+the Win32 API function C<FindFirstFile()> within C<stat()> or C<lstat()> could
+not be closed after reading file information from it.
 
 =item Can't convert base SYSTEMTIME to FILETIME: %s
 
@@ -1419,6 +1425,12 @@ F<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Win32-UTCFileTime>.
 Open bugs on the CPAN Request Tracker can be viewed at
 F<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Win32-UTCFileTime>.
 
+Please test this distribution.  See CPAN Testers at F<http://testers.cpan.org/>
+for details of how to get involved.
+
+Previous test results on CPAN Testers can be viewed at
+F<http://testers.cpan.org/search?request=dist&dist=Win32-UTCFileTime>.
+
 Please rate this distribution on CPAN Ratings at
 F<http://cpanratings.perl.org/rate/?distribution=Win32-UTCFileTime>.
 
@@ -1483,11 +1495,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Win32::UTCFileTime, Version 1.32
+Win32::UTCFileTime, Version 1.33
 
 =head1 DATE
 
-01 Aug 2004
+08 Aug 2004
 
 =head1 HISTORY
 

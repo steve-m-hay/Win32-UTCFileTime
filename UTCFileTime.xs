@@ -614,8 +614,8 @@ static int _AltStat(pTHX_ const char *name, struct stat *st_buf)
             return -1;
         }
         if (!CloseHandle(hndl))
-            warn("Can't close file object handle for file '%s' after reading: "
-                 "%s", name, _WIN_ERR_STR);
+            warn("Can't close file object handle '%lu' for file '%s' after "
+                 "reading: %s", hndl, name, _WIN_ERR_STR);
     }
 
     if (!_FileTimesToUnixTimes(aTHX_ name,
@@ -703,8 +703,8 @@ static BOOL _GetUTCFileTimes(pTHX_ const char *name, time_t *u_atime_t,
                 return FALSE;
             }
             if (!CloseHandle(hndl))
-                warn("Can't close file object handle for file '%s' after "
-                     "reading: %s", name, _WIN_ERR_STR);
+                warn("Can't close file object handle '%lu' for file '%s' after "
+                     "reading: %s", hndl, name, _WIN_ERR_STR);
             wfd.ftLastAccessTime = bhfi.ftLastAccessTime;
             wfd.ftLastWriteTime  = bhfi.ftLastWriteTime;
             wfd.ftCreationTime   = bhfi.ftCreationTime;
@@ -712,8 +712,8 @@ static BOOL _GetUTCFileTimes(pTHX_ const char *name, time_t *u_atime_t,
     }
     else {
         if (!FindClose(hndl))
-            warn("Can't close file search handle for file '%s' after reading: "
-                 "%s", name, _WIN_ERR_STR);
+            warn("Can't close file search handle '%lu' for file '%s' after "
+                 "reading: %s", hndl, name, _WIN_ERR_STR);
     }
 
     return _FileTimesToUnixTimes(aTHX_ name,
@@ -739,31 +739,42 @@ static BOOL _SetUTCFileTimes(pTHX_ const char *name, const time_t u_atime_t,
      * Perl's win32_utime(), does.  Note that this will fail with errno EACCES
      * if name specifies a directory or a read-only file. */
     if ((fd = PerlLIO_open(name, O_RDWR | O_BINARY)) < 0) {
-        if (errno == EACCES) {
-            /* CreateFile() can open directory handles (provided that this is a
-             * Windows NT platform and the FILE_FLAG_BACKUP_SEMANTICS flag is
-             * passed to allow directory handles to be obtained), so try that
-             * instead like Perl's win32_utime() does.  This will (and should)
-             * still fail on read-only files. */
-            if ((hndl = CreateFile(name, GENERIC_READ | GENERIC_WRITE,
-                    FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
-                    FILE_FLAG_BACKUP_SEMANTICS, NULL)) == INVALID_HANDLE_VALUE)
-            {
-                if (_Debug(aTHX))
-                    warn("Can't open directory '%s' for updating: %s",
-                         name, _WIN_ERR_STR);
-                return FALSE;
-            }
-        }
-        else {
+        /* If name is a directory then PerlLIO_open() will fail.  However,
+         * CreateFile() can open directory handles (provided that this is a
+         * Windows NT platform and the FILE_FLAG_BACKUP_SEMANTICS flag is passed
+         * to allow directory handles to be obtained), so try that instead like
+         * Perl's win32_utime() does in case that was the cause of the failure.
+         * This will (and should) still fail on read-only files. */
+        if ((hndl = CreateFile(name, GENERIC_READ | GENERIC_WRITE,
+                FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
+                FILE_FLAG_BACKUP_SEMANTICS, NULL)) == INVALID_HANDLE_VALUE)
+        {
             if (_Debug(aTHX))
                 warn("Can't open file '%s' for updating: %s",
-                     name, _SYS_ERR_STR);
+                     name, _WIN_ERR_STR);
             return FALSE;
         }
     }
-    else {
-        hndl = (HANDLE)_get_osfhandle(fd);
+    else if ((hndl = (HANDLE)_get_osfhandle(fd)) == INVALID_HANDLE_VALUE) {
+        /* If Perl is linked against the OS's msvcrt.dll and this module is
+         * linked against a recent Visual C compiler's msvcrXX.dll then the file
+         * descriptor obtained by the former via PerlLIO_open() cannot be used
+         * by the latter, so _get_osfhandle() will fail.  In case that is the
+         * cause of the failure, we close the file descriptor and try the Win32
+         * API function CreateFile() directly instead. */
+        if (PerlLIO_close(fd) < 0)
+            warn("Can't close file descriptor '%d' for file '%s': %s",
+                 fd, name, _SYS_ERR_STR);
+
+        if ((hndl = CreateFile(name, GENERIC_READ | GENERIC_WRITE,
+                FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
+                NULL, NULL)) == INVALID_HANDLE_VALUE)
+        {
+            if (_Debug(aTHX))
+                warn("Can't open file '%s' for updating: %s",
+                     name, _WIN_ERR_STR);
+            return FALSE;
+        }
     }
 
     /* Use NULL for the creation time passed to SetFileTime() like Microsoft's
@@ -826,8 +837,8 @@ static BOOL _SetUTCFileTimes(pTHX_ const char *name, const time_t u_atime_t,
     }
 
     if (!CloseHandle(hndl))
-        warn("Can't close file object handle for file '%s' after updating: %s",
-             name, _WIN_ERR_STR);
+        warn("Can't close file object handle '%lu' for file '%s' after "
+             "updating: %s", hndl, name, _WIN_ERR_STR);
 
     return ret;
 }
