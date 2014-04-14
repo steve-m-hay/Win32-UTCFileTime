@@ -1,7 +1,7 @@
 #!perl
 #===============================================================================
 #
-# 06_dir_misc.t
+# t/06_dir_misc.t
 #
 # DESCRIPTION
 #   Test program to check getting miscellaneous directory info.

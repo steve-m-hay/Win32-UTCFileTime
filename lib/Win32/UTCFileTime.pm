@@ -1,6 +1,6 @@
 #===============================================================================
 #
-# UTCFileTime.pm
+# lib/Win32/UTCFileTime.pm
 #
 # DESCRIPTION
 #   Module providing functions to get/set UTC file times with stat/utime on
@@ -50,7 +50,7 @@ BEGIN {
         alt_stat
     );
     
-    $VERSION = '1.31';
+    $VERSION = '1.32';
 }
 
 # Boolean debug setting.
@@ -127,8 +127,8 @@ sub stat(;$) {
         my @stats = CORE::stat $file;
 
         unless (@stats) {
+            warn("Can't stat file '$file': $!") if $Debug;
             _set_error_mode($old_umode);
-            warn("CORE::stat() failed for '$file'\n") if $Debug;
             $Try_Alt_Stat ? goto &alt_stat : return;
         }
 
@@ -144,8 +144,8 @@ sub stat(;$) {
         my $ret = CORE::stat $file;
 
         unless ($ret) {
+            warn("Can't stat file '$file': $!") if $Debug;
             _set_error_mode($old_umode);
-            warn("CORE::stat() failed for '$file'\n") if $Debug;
             $Try_Alt_Stat ? goto &alt_stat : return $ret;
         }
 
@@ -165,8 +165,8 @@ sub lstat(;$) {
         my @lstats = CORE::lstat $link;
 
         unless (@lstats) {
+            warn("Can't stat link '$link': $!") if $Debug;
             _set_error_mode($old_umode);
-            warn("CORE::lstat() failed for '$link'\n") if $Debug;
             $Try_Alt_Stat ? goto &alt_stat : return;
         }
 
@@ -182,8 +182,8 @@ sub lstat(;$) {
         my $ret = CORE::lstat $link;
 
         unless ($ret) {
+            warn("Can't stat link '$link': $!") if $Debug;
             _set_error_mode($old_umode);
-            warn("CORE::lstat() failed for '$link'\n") if $Debug;
             $Try_Alt_Stat ? goto &alt_stat : return $ret;
         }
 
@@ -202,12 +202,6 @@ sub alt_stat(;$) {
     if (wantarray) {
         my @stats = _alt_stat($file);
 
-        unless (@stats) {
-            _set_error_mode($old_umode);
-            warn("_alt_stat() failed for '$file'\n") if $Debug;
-            return;
-        }
-
         _set_error_mode($old_umode);
         return @stats;
     }
@@ -215,7 +209,6 @@ sub alt_stat(;$) {
         my $ret = _alt_stat($file);
 
         _set_error_mode($old_umode);
-        warn("_alt_stat() failed for '$file'\n") if not $ret and $Debug;
         return $ret;
     }
 }
@@ -532,7 +525,8 @@ The default value is 0, i.e. debug mode is "off".
 
 =item I<$Try_Alt_Stat>
 
-Control whether or not to try C<alt_stat()> if C<CORE::stat()> fails.
+Control whether or not to try C<alt_stat()> if C<CORE::stat()> or
+C<CORE::lstat()> fails.
 
 Boolean value.
 
@@ -541,7 +535,7 @@ and C<lstat()> functions each call their built-in counterparts first and then
 overwrite the file time fields in the lists thus obtained with the corrected
 values.  Setting this variable to a true value will cause the replacement
 functions to switch to C<alt_stat()> (via a C<goto &NAME> call) if the
-C<CORE::stat()> call fails.
+C<CORE::stat()> or C<CORE::lstat()> call fails.
 
 The default value is 0, i.e. the C<alt_stat()> function is not tried.
 
@@ -560,36 +554,31 @@ classified as follows (a la L<perldiag>):
 
 =over 4
 
-=item Cannot handle year-specific DST clues in time zone information
+=item Can't close file object handle for file '%s' after reading: %s
 
-(F) The Win32 API function C<GetTimeZoneInformation()> returned a
-C<TIME_ZONE_INFORMATION> stucture in which one or both of the transition dates
-between standard time and daylight time are given in "absolute" format rather
-than "day-in-month" format.
+(W) The file object handle for the specified file opened by a call to the Win32
+API function C<CreateFile()> within C<stat()>, C<lstat()> or C<alt_stat()>
+could not be closed after reading file information from it.
 
-=item Could not close file descriptor
+=item Can't close file object handle for file '%s' after updating: %s
 
-(W) The file descriptor opened by a call to the standard C library function
-C<open()> within C<utime()> could not be closed after use.
+(W) The file object handle for the specified file opened by a call to the Win32
+API function C<CreateFile()> or C<_get_osfhandle()> within C<utime()> could not
+be closed after updating the file times using it.
 
-=item Could not close file object handle
+=item Can't close file search handle for file '%s' after reading: %s
 
-(W) The file object handle opened by a call to the Win32 API function
-C<CreateFile()> within C<stat()>, C<lstat()>, C<alt_stat()> or C<utime()> could
-not be closed after use.
+(W) The file search handle for the specified file opened by a call to the Win32
+API function C<FindFirstFile()> within C<stat()> or C<lstat()> could not be
+closed after reading file information from it.
 
-=item Could not close file search handle
-
-(W) The file search handle opened by a call to the Win32 API function
-C<FindFirstFile()> within C<stat()> or C<lstat()> could not be closed after use.
-
-=item Could not convert base SYSTEMTIME to FILETIME
+=item Can't convert base SYSTEMTIME to FILETIME: %s
 
 (I) The Win32 API function C<SystemTimeToFileTime()> was unable to convert a
 C<SYSTEMTIME> representation of the epoch of C<time_t> values (namely, 00:00:00
 Jan 01 1970 UTC) to a C<FILETIME> representation.
 
-=item Could not determine operating system platform.  Assuming the platform is
+=item Can't determine operating system platform: %s.  Assuming the platform is
 Windows NT
 
 (W) The operating system platform (i.e. Win32s, Windows (95/98/ME), Windows NT
@@ -598,7 +587,7 @@ C<alt_stat()> function to decide whether or not a F<".cmd"> file extension
 represents an "executable file" when setting up the C<st_mode> field of the
 C<struct stat>.  A Windows NT platform is assumed in this case.
 
-=item Could not determine name of filesystem.  Assuming file times are stored as
+=item Can't determine name of filesystem: %s.  Assuming file times are stored as
 UTC-based values
 
 (W) The name of the filesystem that the file concerned is on could not be
@@ -607,9 +596,21 @@ file times in different formats (in particular, NTFS stores UTC-based values,
 whereas FAT stores local time-based value).  A filesystem that stores UTC-based
 values is assumed in this case.
 
-=item Could not get time zone information
+=item Can't get time zone information: %s
 
 (F) The Win32 API function C<GetTimeZoneInformation()> failed.
+
+=item Can't handle year-specific DST clues in time zone information
+
+(F) The Win32 API function C<GetTimeZoneInformation()> returned a
+C<TIME_ZONE_INFORMATION> stucture in which one or both of the transition dates
+between standard time and daylight time are given in "absolute" format rather
+than "day-in-month" format.
+
+=item %s is not a valid Win32::UTCFileTime macro
+
+(F) You attempted to lookup the value of the specified constant in the
+Win32::UTCFileTime module, but that constant is unknown to that module.
 
 =item Overflow: Too many links (%lu) to file '%s'
 
@@ -636,6 +637,17 @@ used to test a file time against, is given in "absolute" format rather than
 
 (I) There was an unexpected error looking up the value of the specified
 constant: the constant-lookup function itself is apparently not defined.
+
+=item Unexpected return type %d while processing Win32::UTCFileTime macro %s
+
+(I) There was an unexpected error looking up the value of the specified
+constant: the C component of the constant-lookup function returned an unknown
+type.
+
+=item Your vendor has not defined Win32::UTCFileTime macro %s
+
+(I) You attempted to lookup the value of the specified constant in the
+Win32::UTCFileTime module, but that constant is apparently not defined.
 
 =back
 
@@ -1433,7 +1445,7 @@ Project website (F<http://www.codeproject.com>) in response to my bug report
 (ticket #18513 on the Perl Bugs website, F<http://bugs.perl.org>).
 
 The custom C<import()> method is based on that in the standard library module
-File::Glob (version 1.01).
+File::Glob (version 1.01), written by Nathan Torkington and others.
 
 The C<alt_stat()> function is based on code in CVSNT's C<wnt_stat()> function
 and Perl's C<win32_stat()> and C<pp_stat()> functions.
@@ -1471,11 +1483,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Win32::UTCFileTime, Version 1.31
+Win32::UTCFileTime, Version 1.32
 
 =head1 DATE
 
-26 February 2004
+01 Aug 2004
 
 =head1 HISTORY
 

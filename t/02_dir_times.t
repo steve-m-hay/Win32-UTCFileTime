@@ -1,7 +1,7 @@
 #!perl
 #===============================================================================
 #
-# 02_dir_times.t
+# t/02_dir_times.t
 #
 # DESCRIPTION
 #   Test program to check getting/setting directory times.

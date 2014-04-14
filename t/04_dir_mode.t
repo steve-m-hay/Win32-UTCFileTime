@@ -1,7 +1,7 @@
 #!perl
 #===============================================================================
 #
-# 04_dir_mode.t
+# t/04_dir_mode.t
 #
 # DESCRIPTION
 #   Test program to check getting directory mode.

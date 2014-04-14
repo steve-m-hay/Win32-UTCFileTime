@@ -1,7 +1,7 @@
 #!perl
 #===============================================================================
 #
-# 08_default_arg.t
+# t/08_default_arg.t
 #
 # DESCRIPTION
 #   Test program to check default arguments.

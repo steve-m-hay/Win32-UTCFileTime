@@ -1,9 +1,41 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.31
+                        Win32::UTCFileTime, Version 1.32
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.32 01 Aug 2004
+
+    - Removed standard modules from the list of pre-requisites in Makefile.PL
+      (since a minimum required Perl version is given anyway).
+
+    - Updated Module::Install components from version 0.35 of that distribution
+      and changed Makefile.PL to use abstract_from() now that it is fixed.
+
+    - Changed INSTALL document and Makefile.PL to remove requirement for
+      Microsoft Visual C++, and mention dmake.
+
+    - This module should now build cleanly with Perls built using MinGW / dmake.
+
+    - Changed various standard C library function calls to their Perl
+      replacement functions.
+
+    - Improved warning and error messages to include the message string for the
+      relevant standard C library errno or Win32 API last-error code where
+      appropriate.
+
+    - Fixed a bug in the _SetUTCFileTimes() C function (used by the replacement
+      utime() function) in which a file handle was wrongly being closed twice.
+      The inevitable failure of the second attempted closure had gone unnoticed
+      because the error checking code was also faulty :(
+
+    - Changed return value from the private _set_utc_file_times() XSUB so that
+      if it fails when called in list context then it returns an empty list
+      rather than a single "false" value (which would be seen as "true" in list
+      context).  (It is not currently called in list context anyway; this is
+      just defensive programming.)
 _________________
 
 v1.31 26 Feb 2004
@@ -44,7 +76,7 @@ v1.30 22 Feb 2004
     - Added MANIFEST.SKIP to stop "nmake distcheck" from producing bogus
       warnings.
 
-    - Moved SharedFileOpen.pm into lib/Win32/ sub-directory within distribution.
+    - Moved UTCFileTime.pm into lib/Win32/ sub-directory within distribution.
       This is the new layout style produced by h2xs as of version 1.23.
 
     - Removed ppport.h since no use was being made of it.  (This module builds

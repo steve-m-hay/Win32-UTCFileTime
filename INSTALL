@@ -1,6 +1,6 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.31
+                        Win32::UTCFileTime, Version 1.32
 ________________________________________________________________________________
 
 INSTALLATION
@@ -13,14 +13,19 @@ INSTALLATION
         nmake test
         nmake install
 
+    Use "dmake" rather than "nmake" in the commands above if that is what your
+    Perl was built with.  To determine which make program was used to build your
+    Perl type the following:
+
+        perl -V:make
+
 PREREQUISITES
+
+    This module is only applicable on "native" (i.e. non-Cygwin) Microsoft
+    Windows platforms since only those platforms have C runtime libraries that
+    suffer the behaviour which this module provides corrections to.
 
     Perl version 5.6.0 or later.
 
-    There are no non-standard modules required by this module.
-
-    This module is only applicable on Microsoft Windows platforms when using a
-    Perl built using Microsoft Visual C since other C build environments
-    presumably do not suffer the Microsoft-specific behaviour which this module
-    provides corrections to.
+    There are no non-standard Perl modules required by this module.
 ________________________________________________________________________________

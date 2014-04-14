@@ -25,7 +25,6 @@ const char *    T_PV
 const time_t    T_NV
 const UINT      T_UV
 UINT            T_UV
-BOOL            T_BOOL
 
 #===============================================================================
 # INPUT SECTION

@@ -1,7 +1,7 @@
 #!perl
 #===============================================================================
 #
-# 09_debug.t
+# t/09_debug.t
 #
 # DESCRIPTION
 #   Test program to check debug variable.
@@ -48,7 +48,7 @@ MAIN: {
 
     unlink $file or die "Can't delete file '$file': $!\n" if -e $file;
 
-    $SIG{__WARN__} = \&_stderr;
+    local $SIG{__WARN__} = \&_stderr;
 
                                         # Tests 2-9: Check $Debug
     $Win32::UTCFileTime::Debug = 0;
@@ -63,7 +63,7 @@ MAIN: {
     _stderr(undef);
     stat $file;
     $output = _stderr();
-    ok(defined $output and $output =~ /CORE::stat\(\) failed for '$file'/);
+    ok(defined $output and $output =~ /^Can't stat file '$file'/);
 
     $Win32::UTCFileTime::Debug = 0;
 
@@ -77,7 +77,7 @@ MAIN: {
     _stderr(undef);
     lstat $file;
     $output = _stderr();
-    ok(defined $output and $output =~ /CORE::lstat\(\) failed for '$file'/);
+    ok(defined $output and $output =~ /^Can't stat link '$file'/);
 
     $Win32::UTCFileTime::Debug = 0;
 
@@ -91,7 +91,7 @@ MAIN: {
     _stderr(undef);
     Win32::UTCFileTime::alt_stat($file);
     $output = _stderr();
-    ok(defined $output and $output =~ /_alt_stat\(\) failed for '$file'/);
+    ok(defined $output and $output =~ /^Can't open file '$file'/);
 
     $Win32::UTCFileTime::Debug = 0;
 
@@ -105,7 +105,7 @@ MAIN: {
     _stderr(undef);
     utime undef, undef, $file;
     $output = _stderr();
-    ok(defined $output and $output =~ /open\(\) failed for '$file'/);
+    ok(defined $output and $output =~ /^Can't open file '$file'/);
 }
 
 #===============================================================================

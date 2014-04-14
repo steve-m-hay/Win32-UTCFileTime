@@ -1,7 +1,7 @@
 #!perl
 #===============================================================================
 #
-# 01_file_times.t
+# t/01_file_times.t
 #
 # DESCRIPTION
 #   Test program to check getting/setting file times.

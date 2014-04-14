@@ -20,7 +20,6 @@ use 5.006000;
 use strict;
 use warnings;
 
-use Config;
 use inc::Module::Install;
 
 #===============================================================================
@@ -28,8 +27,9 @@ use inc::Module::Install;
 #===============================================================================
 
 BEGIN {
-    unless ($Config{osname} =~ /MSWin32/i and $Config{cc} =~ /cl/i) {
-        die "This module requires Microsoft Visual C to build.\n";
+    unless ($^O =~ /MSWin32/i) {
+        die qq{This module requires a "native" (i.e. non-Cygwin) Microsoft } .
+            qq{Windows platform.\n};
     }
 }
 
@@ -38,20 +38,13 @@ BEGIN {
 #===============================================================================
 
 MAIN: {
-    name           ('Win32-UTCFileTime');
-    abstract       ('Get/set UTC file times with stat/utime on Win32');
-    version_from   ('lib/Win32/UTCFileTime.pm');
-    author         ('Steve Hay <shay@cpan.org>');
-    license        ('perl');
-    perl_version   (5.006000);
-    requires       ('Carp');
-    requires       ('Exporter');
-    requires       ('XSLoader');
-    build_requires ('File::Copy');
-    build_requires ('File::Spec');
-    build_requires ('Test');
-    recommends     ('Test::Pod' => 1.00);
-    clean_files    ('const-c.inc const-xs.inc');
+    name          ('Win32-UTCFileTime');
+    abstract_from ('lib/Win32/UTCFileTime.pm');
+    version_from  ('lib/Win32/UTCFileTime.pm');
+    author        ('Steve Hay <shay@cpan.org>');
+    license       ('perl');
+    perl_version  (5.006000);
+    clean_files   ('const-c.inc const-xs.inc');
 
     WriteMakefile(
         dist => {

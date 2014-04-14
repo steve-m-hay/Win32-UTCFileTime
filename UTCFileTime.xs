@@ -20,13 +20,11 @@
  * C CODE SECTION
  *============================================================================*/
 
-#include <ctype.h>                      /* For isalpha() and tolower().       */
 #include <direct.h>                     /* For _getdrive().                   */
 #include <errno.h>                      /* For EACCES.                        */
 #include <fcntl.h>                      /* For the O_* flags.                 */
-#include <io.h>                         /* For lowio and _get_osfhandle().    */
-#include <memory.h>                     /* For memset().                      */
-#include <stdlib.h>                     /* For errno and tolower().           */
+#include <io.h>                         /* For _get_osfhandle().              */
+#include <stdlib.h>                     /* For errno.                         */
 #include <string.h>                     /* For the str*() functions.          */
 #include <sys/types.h>                  /* For struct stat.                   */
 #include <sys/stat.h>                   /* For struct stat.                   */
@@ -37,21 +35,42 @@
 
 #define PERL_NO_GET_CONTEXT             /* See the "perlguts" manpage.        */
 
+#include "patchlevel.h"                 /* Get the version numbers first.     */
+
+#if PERL_REVISION == 5
+#  if PERL_VERSION > 6
+#    define PERLIO_NOT_STDIO 0          /* See the "perlapio" manpage.        */
+#  endif
+#endif
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
 #include "const-c.inc"
 
-#define _MAX_FS      32
-#define _isslash(c)  ((c) == '\\' || (c) == '/')
-#define _isutcfs(fs) (!strstr(fs, "FAT"))
+#define _MAX_FS 32
 
-static BOOL _IsWinNT(void);
-static BOOL _IsUTCVolume(const char *name);
+#define _isslash(c)  ((c) == '\\' || (c) == '/')
+#define _isutcfs(fs) (!instr(fs, "FAT"))
+
+static int   _saved_errno;
+static DWORD _saved_error;
+#define SAVE_ERRS    STMT_START { \
+    _saved_errno = errno; _saved_error = GetLastError(); \
+} STMT_END
+#define RESTORE_ERRS STMT_START { \
+    errno = _saved_errno; SetLastError(_saved_error); \
+} STMT_END
+
+#define _SYS_ERR_STR (strerror(errno))
+#define _WIN_ERR_STR (_StrWinError(aTHX_ GetLastError()))
+
+static BOOL _IsWinNT(pTHX);
+static BOOL _IsUTCVolume(pTHX_ const char *name);
 static BOOL _IsLeapYear(WORD year);
 static int _CompareTargetDate(const SYSTEMTIME *p_test_date,
     const SYSTEMTIME *p_target_date);
-static int _GetTimeZoneBias(const SYSTEMTIME *st);
+static LONG _GetTimeZoneBias(pTHX_ const SYSTEMTIME *st);
 static BOOL _FileTimeToUnixTime(pTHX_ const FILETIME *ft, time_t *ut,
     const BOOL ft_is_local);
 static BOOL _UnixTimeToFileTime(pTHX_ const time_t ut, FILETIME *ft,
@@ -60,13 +79,14 @@ static BOOL _FileTimesToUnixTimes(pTHX_ const char *name,
     const FILETIME *atime_ft, const FILETIME *mtime_ft,
     const FILETIME *ctime_ft, time_t *u_atime_t, time_t *u_mtime_t,
     time_t *u_ctime_t);
-static unsigned short _FileAttributesToUnixMode(const DWORD fa,
+static unsigned short _FileAttributesToUnixMode(pTHX_ const DWORD fa,
     const char *name);
 static int _AltStat(pTHX_ const char *name, struct stat *st_buf);
 static BOOL _GetUTCFileTimes(pTHX_ const char *name, time_t *u_atime_t,
     time_t *u_mtime_t, time_t *u_ctime_t);
 static BOOL _SetUTCFileTimes(pTHX_ const char *name, const time_t u_atime_t,
     const time_t u_mtime_t);
+static char *_StrWinError(pTHX_ DWORD err_num);
 static bool _Debug(pTHX);
 
 /*
@@ -74,20 +94,20 @@ static bool _Debug(pTHX);
  * NT (as opposed to Win32s, Windows [95/98/ME] or Windows CE).
  */
 
-static BOOL _IsWinNT(void) {
+static BOOL _IsWinNT(pTHX) {
     static BOOL initialised = FALSE;
     static BOOL is_winnt;
     OSVERSIONINFO osver;
 
     if (!initialised) {
-        memset(&osver, 0, sizeof(OSVERSIONINFO));
+        Zero(&osver, 1, OSVERSIONINFO);
         osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
         if (GetVersionEx(&osver)) {
             is_winnt = (osver.dwPlatformId == VER_PLATFORM_WIN32_NT);
         }
         else {
-            warn("Could not determine operating system platform.  Assuming "
-                 "the platform is Windows NT");
+            warn("Can't determine operating system platform: %s.  Assuming the "
+                 "platform is Windows NT", _WIN_ERR_STR);
             is_winnt = TRUE;
         }
         initialised = TRUE;
@@ -103,12 +123,12 @@ static BOOL _IsWinNT(void) {
  * This function is based on code written by Tony M Hoyle.
  */
 
-static BOOL _IsUTCVolume(const char *name)
+static BOOL _IsUTCVolume(pTHX_ const char *name)
 {
-    int len = strlen(name);
+    size_t len = strlen(name);
     char szFs[_MAX_FS];
 
-    if (len >= 2 && isalpha(name[0]) && name[1] == ':') {
+    if (len >= 2 && isALPHA(name[0]) && name[1] == ':') {
         /* An absolute path with a drive letter is specified. */
         char root[4] = "?:\\";
         root[0] = name[0];
@@ -119,8 +139,8 @@ static BOOL _IsUTCVolume(const char *name)
             return _isutcfs(szFs);
         }
         else {
-            warn("Could not determine name of filesystem.  Assuming file times "
-                 "are stored as UTC-based values");
+            warn("Can't determine name of filesystem: %s.  Assuming file times "
+                 "are stored as UTC-based values", _WIN_ERR_STR);
             return TRUE;
         }
     }
@@ -139,8 +159,8 @@ static BOOL _IsUTCVolume(const char *name)
             return _isutcfs(szFs);
         }
         else {
-            warn("Could not determine name of filesystem.  Assuming file times "
-                 "are stored as UTC-based values");
+            warn("Can't determine name of filesystem: %s.  Assuming file times "
+                 "are stored as UTC-based values", _WIN_ERR_STR);
             return TRUE;
         }
     }
@@ -264,19 +284,19 @@ static int _CompareTargetDate(const SYSTEMTIME *test_st,
  * This function is based on code written by Jonathan M Gilligan.
  */
 
-static int _GetTimeZoneBias(const SYSTEMTIME *st)
+static LONG _GetTimeZoneBias(pTHX_ const SYSTEMTIME *st)
 {
     TIME_ZONE_INFORMATION tz;
-    int bias;
+    LONG bias;
 
     if (GetTimeZoneInformation(&tz) == TIME_ZONE_ID_INVALID)
-        croak("Could not get time zone information");
+        croak("Can't get time zone information: %s", _WIN_ERR_STR);
 
     /* We only deal with cases where the transition dates between standard time
      * and daylight time are given in "day-in-month" format rather than
      * "absolute" format. */
     if (tz.DaylightDate.wYear != 0 || tz.StandardDate.wYear != 0)
-        croak("Cannot handle year-specific DST clues in time zone information");
+        croak("Can't handle year-specific DST clues in time zone information");
 
     /* Get the difference between UTC and local time. */
     bias = tz.Bias;
@@ -322,7 +342,7 @@ static const SYSTEMTIME base_st = {
 static BOOL _FileTimeToUnixTime(pTHX_ const FILETIME *ft, time_t *ut,
     const BOOL ft_is_local)
 {
-    int bias = 0;
+    LONG bias = 0;
     static BOOL initialised = FALSE;
     static FILETIME base_ft;
     ULARGE_INTEGER it;
@@ -332,11 +352,11 @@ static BOOL _FileTimeToUnixTime(pTHX_ const FILETIME *ft, time_t *ut,
 
         /* Convert the FILETIME to a SYSTEMTIME, and get the bias from that. */
         if (FileTimeToSystemTime(ft, &st)) {
-            bias = _GetTimeZoneBias(&st);
+            bias = _GetTimeZoneBias(aTHX_ &st);
         }
         else {
             if (_Debug(aTHX))
-                warn("FileTimeToSystemTime() failed\n");
+                warn("Can't convert FILETIME to SYSTEMTIME: %s", _WIN_ERR_STR);
 
             /* Do the same as mktime() in the event of failure. */
             *ut = -1;
@@ -348,7 +368,8 @@ static BOOL _FileTimeToUnixTime(pTHX_ const FILETIME *ft, time_t *ut,
      * needs to be done once. */
     if (!initialised) {
         if (!SystemTimeToFileTime(&base_st, &base_ft))
-            croak("Could not convert base SYSTEMTIME to FILETIME");
+            croak("Can't convert base SYSTEMTIME to FILETIME: %s",
+                  _WIN_ERR_STR);
         initialised = TRUE;
     }
 
@@ -381,13 +402,14 @@ static BOOL _UnixTimeToFileTime(pTHX_ const time_t ut, FILETIME *ft,
     static BOOL initialised = FALSE;
     static FILETIME base_ft;
     ULARGE_INTEGER it;
-    int bias = 0;
+    LONG bias = 0;
 
     /* Get the epoch of time_t values as a FILETIME.  This calculation only
      * needs to be done once. */
     if (!initialised) {
         if (!SystemTimeToFileTime(&base_st, &base_ft))
-            croak("Could not convert base SYSTEMTIME to FILETIME");
+            croak("Can't convert base SYSTEMTIME to FILETIME: %s",
+                  _WIN_ERR_STR);
         initialised = TRUE;
     }
 
@@ -405,11 +427,11 @@ static BOOL _UnixTimeToFileTime(pTHX_ const time_t ut, FILETIME *ft,
 
         /* Convert the FILETIME to a SYSTEMTIME, and get the bias from that. */
         if (FileTimeToSystemTime((FILETIME *)&it, &st)) {
-            bias = _GetTimeZoneBias(&st);
+            bias = _GetTimeZoneBias(aTHX_ &st);
         }
         else {
             if (_Debug(aTHX))
-                warn("FileTimeToSystemTime() failed\n");
+                warn("Can't convert FILETIME to SYSTEMTIME: %s", _WIN_ERR_STR);
 
             /* Set a zero FILETIME in the event of failure. */
             (*ft).dwLowDateTime  = 0;
@@ -442,7 +464,7 @@ static BOOL _FileTimesToUnixTimes(pTHX_ const char *name,
 {
     BOOL ret;
 
-    if (_IsUTCVolume(name)) {
+    if (_IsUTCVolume(aTHX_ name)) {
         /* The filesystem stores UTC file times.  FindFirstFile() and
          * GetFileInformationByHandle() return them to us as unadulterated UTC
          * FILETIMEs, so just convert them to time_t values to be returned. */
@@ -477,11 +499,11 @@ static BOOL _FileTimesToUnixTimes(pTHX_ const char *name,
  * struct stat.
  */
 
-static unsigned short _FileAttributesToUnixMode(const DWORD fa,
+static unsigned short _FileAttributesToUnixMode(pTHX_ const DWORD fa,
     const char *name)
 {
     unsigned short st_mode = 0;
-    int len;
+    size_t len;
     const char *p;
 
     if (fa & FILE_ATTRIBUTE_DIRECTORY)
@@ -506,7 +528,7 @@ static unsigned short _FileAttributesToUnixMode(const DWORD fa,
     len = strlen(name);
     if (len >= 4 && (*(p = name + len - 4) == '.') &&
             (!stricmp(p, ".exe") ||  !stricmp(p, ".bat") ||
-             !stricmp(p, ".com") || (!stricmp(p, ".cmd") && _IsWinNT())))
+             !stricmp(p, ".com") || (!stricmp(p, ".cmd") && _IsWinNT(aTHX))))
         st_mode |= (  _S_IEXEC       +
                      (_S_IEXEC >> 3) +
                      (_S_IEXEC >> 6));
@@ -533,12 +555,12 @@ static int _AltStat(pTHX_ const char *name, struct stat *st_buf)
     /* Return an error if a wildcard has been specified. */
     if (strpbrk(name, "?*")) {
         if (_Debug(aTHX))
-            warn("Wildcard in filename '%s'\n", name);
+            warn("Wildcard in filename '%s'", name);
         errno = ENOENT;
         return -1;
     }
 
-    memset(&bhfi, 0, sizeof(bhfi));
+    Zero(&bhfi, 1, BY_HANDLE_FILE_INFORMATION);
 
     /* Use CreateFile(), rather than FindFirstFile() like Microsoft's stat()
      * does, for three reasons:
@@ -563,23 +585,37 @@ static int _AltStat(pTHX_ const char *name, struct stat *st_buf)
         /* If this is a valid directory (presumably under a Windows 95 platform
          * on which the FILE_FLAG_BACKUP_SEMANTICS flag doesn't do the trick)
          * then set all the fields except st_mode to zero and return TRUE, like
-         * Perl's built-in functions do in this case. */
+         * Perl's built-in functions do in this case.  Save the Win32 API last-
+         * error code from the failed CreateFile() call first in case this is
+         * not a directory. */
+        DWORD le = GetLastError();
         DWORD fa = GetFileAttributes(name);
         if (fa != 0xFFFFFFFF && (fa & FILE_ATTRIBUTE_DIRECTORY)) {
-            memset(st_buf, 0, sizeof(*st_buf));
-            st_buf->st_mode = _FileAttributesToUnixMode(fa, name);
+            Zero(st_buf, 1, struct stat);
+            st_buf->st_mode = _FileAttributesToUnixMode(aTHX_ fa, name);
             return 0;
         }
         else {
-            if (_Debug(aTHX))
-                warn("CreateFile() failed for '%s'\n", name);
+            if (_Debug(aTHX)) {
+                warn("Can't open file '%s' for reading: %s",
+                     name, _StrWinError(aTHX_ le));
+            }
             return -1;
         }
     }
     else {
-        GetFileInformationByHandle(hndl, &bhfi);
+        if (!GetFileInformationByHandle(hndl, &bhfi)) {
+            if (_Debug(aTHX))
+                warn("Can't get file information for file '%s': %s",
+                     name, _WIN_ERR_STR);
+            SAVE_ERRS;
+            CloseHandle(hndl);
+            RESTORE_ERRS;
+            return -1;
+        }
         if (!CloseHandle(hndl))
-            warn("Could not close file object handle");
+            warn("Can't close file object handle for file '%s' after reading: "
+                 "%s", name, _WIN_ERR_STR);
     }
 
     if (!_FileTimesToUnixTimes(aTHX_ name,
@@ -587,10 +623,11 @@ static int _AltStat(pTHX_ const char *name, struct stat *st_buf)
             &st_buf->st_atime, &st_buf->st_mtime, &st_buf->st_ctime))
         return -1;
 
-    st_buf->st_mode = _FileAttributesToUnixMode(bhfi.dwFileAttributes, name);
+    st_buf->st_mode = _FileAttributesToUnixMode(aTHX_ bhfi.dwFileAttributes,
+                                                name);
 
     if (bhfi.nNumberOfLinks > SHRT_MAX) {
-        warn("Overflow: Too many links (%lu) to file '%s'\n",
+        warn("Overflow: Too many links (%lu) to file '%s'",
              bhfi.nNumberOfLinks, name);
         st_buf->st_nlink = SHRT_MAX;
     }
@@ -601,8 +638,8 @@ static int _AltStat(pTHX_ const char *name, struct stat *st_buf)
     st_buf->st_size = bhfi.nFileSizeLow;
 
     /* Get the drive from the name, or use the current drive. */
-    if (strlen(name) >= 2 && isalpha(name[0]) && name[1] == ':')
-        drive = tolower(name[0]) - 'a' + 1;
+    if (strlen(name) >= 2 && isALPHA(name[0]) && name[1] == ':')
+        drive = toLOWER(name[0]) - 'a' + 1;
     else
         drive = _getdrive();
 
@@ -656,9 +693,18 @@ static BOOL _GetUTCFileTimes(pTHX_ const char *name, time_t *u_atime_t,
             return TRUE;
         }
         else {
-            GetFileInformationByHandle(hndl, &bhfi);
+            if (!GetFileInformationByHandle(hndl, &bhfi)) {
+                if (_Debug(aTHX))
+                    warn("Can't get file information for file '%s': %s",
+                         name, _WIN_ERR_STR);
+                SAVE_ERRS;
+                CloseHandle(hndl);
+                RESTORE_ERRS;
+                return FALSE;
+            }
             if (!CloseHandle(hndl))
-                warn("Could not close file object handle");
+                warn("Can't close file object handle for file '%s' after "
+                     "reading: %s", name, _WIN_ERR_STR);
             wfd.ftLastAccessTime = bhfi.ftLastAccessTime;
             wfd.ftLastWriteTime  = bhfi.ftLastWriteTime;
             wfd.ftCreationTime   = bhfi.ftCreationTime;
@@ -666,7 +712,8 @@ static BOOL _GetUTCFileTimes(pTHX_ const char *name, time_t *u_atime_t,
     }
     else {
         if (!FindClose(hndl))
-            warn("Could not close file search handle");
+            warn("Can't close file search handle for file '%s' after reading: "
+                 "%s", name, _WIN_ERR_STR);
     }
 
     return _FileTimesToUnixTimes(aTHX_ name,
@@ -691,7 +738,7 @@ static BOOL _SetUTCFileTimes(pTHX_ const char *name, const time_t u_atime_t,
     /* Try opening the file normally first, like Microsoft's utime(), and hence
      * Perl's win32_utime(), does.  Note that this will fail with errno EACCES
      * if name specifies a directory or a read-only file. */
-    if ((fd = open(name, O_RDWR | O_BINARY)) < 0) {
+    if ((fd = PerlLIO_open(name, O_RDWR | O_BINARY)) < 0) {
         if (errno == EACCES) {
             /* CreateFile() can open directory handles (provided that this is a
              * Windows NT platform and the FILE_FLAG_BACKUP_SEMANTICS flag is
@@ -703,13 +750,15 @@ static BOOL _SetUTCFileTimes(pTHX_ const char *name, const time_t u_atime_t,
                     FILE_FLAG_BACKUP_SEMANTICS, NULL)) == INVALID_HANDLE_VALUE)
             {
                 if (_Debug(aTHX))
-                    warn("CreateFile() failed for '%s'\n", name);
+                    warn("Can't open directory '%s' for updating: %s",
+                         name, _WIN_ERR_STR);
                 return FALSE;
             }
         }
         else {
             if (_Debug(aTHX))
-                warn("open() failed for '%s'\n", name);
+                warn("Can't open file '%s' for updating: %s",
+                     name, _SYS_ERR_STR);
             return FALSE;
         }
     }
@@ -721,7 +770,7 @@ static BOOL _SetUTCFileTimes(pTHX_ const char *name, const time_t u_atime_t,
      * utime() does.  This simply means that the information is not changed.
      * There is no need to retrieve the existing value first in order to reset
      * it like Perl's win32_utime() does. */
-    if (_IsUTCVolume(name)) {
+    if (_IsUTCVolume(aTHX_ name)) {
         FILETIME u_atime_ft;
         FILETIME u_mtime_ft;
 
@@ -733,7 +782,8 @@ static BOOL _SetUTCFileTimes(pTHX_ const char *name, const time_t u_atime_t,
         {
             if (!SetFileTime(hndl, NULL, &u_atime_ft, &u_mtime_ft)) {
                 if (_Debug(aTHX))
-                    warn("SetFileTime() failed for '%s'\n", name);
+                    warn("Can't set file times for file '%s': %s",
+                         name, _WIN_ERR_STR);
                 ret = FALSE;
             }
             else {
@@ -762,7 +812,8 @@ static BOOL _SetUTCFileTimes(pTHX_ const char *name, const time_t u_atime_t,
         {
             if (!SetFileTime(hndl, NULL, &u_atime_ft, &u_mtime_ft)) {
                 if (_Debug(aTHX))
-                    warn("SetFileTime() failed for '%s'\n", name);
+                    warn("Can't set file times for file '%s': %s",
+                         name, _WIN_ERR_STR);
                 ret = FALSE;
             }
             else {
@@ -775,12 +826,56 @@ static BOOL _SetUTCFileTimes(pTHX_ const char *name, const time_t u_atime_t,
     }
 
     if (!CloseHandle(hndl))
-        warn("Could not close file object handle");
-
-    if (fd >= 0 && !close(fd))
-        warn("Could not close file descriptor");
+        warn("Can't close file object handle for file '%s' after updating: %s",
+             name, _WIN_ERR_STR);
 
     return ret;
+}
+
+/*
+ * Function to get a message string for the given Win32 API last-error code.
+ * Returns a pointer to a buffer containing the string.
+ * Note that the buffer is a function-static variable so subsequent calls to
+ * this function will overwrite the the string.
+ *
+ * This function is based on Perl's win32_str_os_error() function.
+ */
+
+static char *_StrWinError(pTHX_ DWORD err_num) {
+    static char _err_str[BUFSIZ];
+    char *err_str;
+    DWORD len;
+
+    len = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM, NULL,
+        err_num, 0, (char *)&err_str, 1, NULL);
+
+    if (len > 0) {
+        /* Remove the trailing newline (and any other whitespace).  Note that
+         * the len returned by FormatMessage() does not include the null-
+         * terminator, so decrement len by one immediately. */
+        do {
+            --len;
+        } while (len > 0 && isSPACE(err_str[len]));
+
+        /* Increment len by one unless the last character is a period, and then
+         * add a null-terminator, so that any trailing peiod is also removed. */
+        if (err_str[len] != '.')
+            ++len;
+
+        err_str[len] = '\0';
+    }
+
+    if (len == 0) {
+        sprintf(_err_str, "Unknown error #0x%lX", err_num);
+    }
+    else {
+        strncpy(_err_str, err_str, sizeof(_err_str) - 1);
+        _err_str[len] = '\0';
+        LocalFree(err_str);
+    }
+
+    return _err_str;
 }
 
 /*
@@ -816,7 +911,7 @@ _alt_stat(file)
 
     PPCODE:
     {
-        I32 gimme = GIMME_V;
+        U32 gimme = GIMME_V;
         struct stat st_buf;
 
         if (_AltStat(aTHX_ file, &st_buf) == 0) {
@@ -825,17 +920,17 @@ _alt_stat(file)
             }
             else if (gimme == G_ARRAY) {
                 EXTEND(SP, 13);
-                PUSHs(sv_2mortal(newSViv(st_buf.st_dev)));
-                PUSHs(sv_2mortal(newSViv(st_buf.st_ino)));
-                PUSHs(sv_2mortal(newSVuv(st_buf.st_mode)));
-                PUSHs(sv_2mortal(newSVuv(st_buf.st_nlink)));
-                PUSHs(sv_2mortal(newSViv(st_buf.st_uid)));
-                PUSHs(sv_2mortal(newSViv(st_buf.st_gid)));
-                PUSHs(sv_2mortal(newSViv(st_buf.st_rdev)));
+                PUSHs(sv_2mortal(newSViv((IV)st_buf.st_dev)));
+                PUSHs(sv_2mortal(newSViv((IV)st_buf.st_ino)));
+                PUSHs(sv_2mortal(newSVuv((UV)st_buf.st_mode)));
+                PUSHs(sv_2mortal(newSVuv((UV)st_buf.st_nlink)));
+                PUSHs(sv_2mortal(newSViv((IV)st_buf.st_uid)));
+                PUSHs(sv_2mortal(newSViv((IV)st_buf.st_gid)));
+                PUSHs(sv_2mortal(newSViv((IV)st_buf.st_rdev)));
                 PUSHs(sv_2mortal(newSVnv((NV)st_buf.st_size)));
-                PUSHs(sv_2mortal(newSViv(st_buf.st_atime)));
-                PUSHs(sv_2mortal(newSViv(st_buf.st_mtime)));
-                PUSHs(sv_2mortal(newSViv(st_buf.st_ctime)));
+                PUSHs(sv_2mortal(newSViv((IV)st_buf.st_atime)));
+                PUSHs(sv_2mortal(newSViv((IV)st_buf.st_mtime)));
+                PUSHs(sv_2mortal(newSViv((IV)st_buf.st_ctime)));
                 PUSHs(sv_2mortal(newSVpvn("", 0)));
                 PUSHs(sv_2mortal(newSVpvn("", 0)));
                 XSRETURN(13);
@@ -845,10 +940,7 @@ _alt_stat(file)
             }
         }
         else {
-            if (gimme == G_SCALAR)
-                XSRETURN_NO;
-            else
-                XSRETURN_EMPTY;
+            XSRETURN_EMPTY;
         }
     }
 
@@ -869,9 +961,9 @@ _get_utc_file_times(file)
 
         if (_GetUTCFileTimes(aTHX_ file, &atime, &mtime, &ctime)) {
             EXTEND(SP, 3);
-            PUSHs(sv_2mortal(newSViv(atime)));
-            PUSHs(sv_2mortal(newSViv(mtime)));
-            PUSHs(sv_2mortal(newSViv(ctime)));
+            PUSHs(sv_2mortal(newSViv((IV)atime)));
+            PUSHs(sv_2mortal(newSViv((IV)mtime)));
+            PUSHs(sv_2mortal(newSViv((IV)ctime)));
             XSRETURN(3);
         }
         else {
@@ -881,7 +973,7 @@ _get_utc_file_times(file)
 
 # Private function to expose the _SetUTCFileTimes() function above.
 
-BOOL
+void
 _set_utc_file_times(file, atime, mtime)
     PROTOTYPE: $$$
 
@@ -890,11 +982,15 @@ _set_utc_file_times(file, atime, mtime)
         const time_t atime;
         const time_t mtime;
 
-    CODE:
-        RETVAL = _SetUTCFileTimes(aTHX_ file, atime, mtime);
-
-    OUTPUT:
-        RETVAL
+    PPCODE:
+    {
+        if (_SetUTCFileTimes(aTHX_ file, atime, mtime)) {
+            XSRETURN_YES;
+        }
+        else {
+            XSRETURN_EMPTY;
+        }
+    }
 
 # Private function to expose the Win32 API function SetErrorMode().
 

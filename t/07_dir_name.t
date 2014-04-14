@@ -1,7 +1,7 @@
 #!perl
 #===============================================================================
 #
-# 07_dir_name.t
+# t/07_dir_name.t
 #
 # DESCRIPTION
 #   Test program to check getting info for various directory names.

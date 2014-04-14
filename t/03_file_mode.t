@@ -1,7 +1,7 @@
 #!perl
 #===============================================================================
 #
-# 03_file_mode.t
+# t/03_file_mode.t
 #
 # DESCRIPTION
 #   Test program to check getting file mode.

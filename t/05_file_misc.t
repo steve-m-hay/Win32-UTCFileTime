@@ -1,7 +1,7 @@
 #!perl
 #===============================================================================
 #
-# 05_file_misc.t
+# t/05_file_misc.t
 #
 # DESCRIPTION
 #   Test program to check getting miscellaneous file information.
