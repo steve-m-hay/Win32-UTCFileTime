@@ -7,7 +7,7 @@
 #   Test script to check default arguments.
 #
 # COPYRIGHT
-#   Copyright (C) 2004 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -20,26 +20,21 @@ use 5.006000;
 use strict;
 use warnings;
 
-use Test;
+use Test::More tests => 7;
 
 #===============================================================================
-# INITIALISATION
+# INITIALIZATION
 #===============================================================================
 
 BEGIN {
-    plan tests => 7;                    # Number of tests to be executed
+    use_ok('Win32::UTCFileTime');
 }
-
-use Win32::UTCFileTime;
 
 #===============================================================================
 # MAIN PROGRAM
 #===============================================================================
 
 MAIN: {
-                                        # Test 1: Did we make it this far OK?
-    ok(1);
-
     my $file = 'test.txt';
 
     my($fh, @stats1, @stats2, $ok);
@@ -51,55 +46,25 @@ MAIN: {
     $_ = $file;
     @stats2 = Win32::UTCFileTime::stat;
 
-                                        # Test 2: Check $_ is not changed
-    ok($_ eq $file);
-
-                                        # Test 3: Check results are the same
-    if ($ok = (@stats1 == @stats2)) {
-        for my $i (0 .. $#stats1) {
-            if ($stats1[$i] ne $stats2[$i]) {
-                $ok = 0;
-                last;
-            }
-        }
-    }
-    ok($ok);
+    is($_, $file, "stat() doesn't change \$_");
+    is_deeply(\@stats2, \@stats1,
+       '... and gets the same results as stat($file)');
 
     @stats1 = Win32::UTCFileTime::lstat $file;
     $_ = $file;
     @stats2 = Win32::UTCFileTime::lstat;
 
-                                        # Test 4: Check $_ is not changed
-    ok($_ eq $file);
-
-                                        # Test 5: Check results are the same
-    if ($ok = (@stats1 == @stats2)) {
-        for my $i (0 .. $#stats1) {
-            if ($stats1[$i] ne $stats2[$i]) {
-                $ok = 0;
-                last;
-            }
-        }
-    }
-    ok($ok);
+    is($_, $file, "lstat() doesn't change \$_");
+    is_deeply(\@stats2, \@stats1,
+       '... and gets the same results as lstat($file)');
 
     @stats1 = Win32::UTCFileTime::alt_stat($file);
     $_ = $file;
     @stats2 = Win32::UTCFileTime::alt_stat;
 
-                                        # Test 5: Check $_ is not changed
-    ok($_ eq $file);
-
-                                        # Test 7: Check results are the same
-    if ($ok = (@stats1 == @stats2)) {
-        for my $i (0 .. $#stats1) {
-            if ($stats1[$i] ne $stats2[$i]) {
-                $ok = 0;
-                last;
-            }
-        }
-    }
-    ok($ok);
+    is($_, $file, "alt_stat() doesn't change \$_");
+    is_deeply(\@stats2, \@stats1,
+       '... and gets the same results as alt_stat($file)');
 
     unlink $file;
 }

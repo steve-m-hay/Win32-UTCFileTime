@@ -23,7 +23,7 @@ use warnings;
 use inc::Module::Install;
 
 #===============================================================================
-# INITIALISATION
+# INITIALIZATION
 #===============================================================================
 
 BEGIN {
@@ -44,6 +44,7 @@ MAIN: {
     author         ('Steve Hay <shay@cpan.org>');
     license        ('perl');
     perl_version   (5.006000);
+    build_requires ('Test::More');
     features       ('POD testing' => [
         -default   => 0,
         recommends ('Test::Pod' => '1.00')

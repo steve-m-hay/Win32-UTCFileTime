@@ -7,7 +7,7 @@
 #   Test script to check $ErrStr variable.
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2004 Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -20,74 +20,72 @@ use 5.006000;
 use strict;
 use warnings;
 
-use Test;
+use Test::More tests => 9;
 
 #===============================================================================
-# INITIALISATION
+# INITIALIZATION
 #===============================================================================
 
 BEGIN {
-    plan tests => 9;                    # Number of tests to be executed
+    use_ok('Win32::UTCFileTime', qw(:DEFAULT $ErrStr));
 }
-
-use Win32::UTCFileTime qw(:DEFAULT $ErrStr);
 
 #===============================================================================
 # MAIN PROGRAM
 #===============================================================================
 
 MAIN: {
-                                        # Test 1: Did we make it this far OK?
-    ok(1);
-
     my $file = 'test.txt';
 
     my $fh;
 
-                                        # Tests 2-9: Check $ErrStr
     open $fh, ">$file";
     close $fh;
 
     stat $file;
-    ok($ErrStr eq '');
+    is($ErrStr, '', '$ErrStr is blank when stat() succeeds');
 
     unlink $file;
 
     stat $file;
-    ok($ErrStr =~ /^Can't stat file '\Q$file\E'/);
+    like($ErrStr, qr/^Can't stat file '\Q$file\E'/,
+         '$ErrStr is set correctly when stat() fails');
 
     open $fh, ">$file";
     close $fh;
 
     lstat $file;
-    ok($ErrStr eq '');
+    is($ErrStr, '', '$ErrStr is blank when lstat() succeeds');
 
     unlink $file;
 
     lstat $file;
-    ok($ErrStr =~ /^Can't stat link '\Q$file\E'/);
+    like($ErrStr, qr/^Can't stat link '\Q$file\E'/,
+         '$ErrStr is set correctly when lstat() fails');
 
     open $fh, ">$file";
     close $fh;
 
     Win32::UTCFileTime::alt_stat($file);
-    ok($ErrStr eq '');
+    is($ErrStr, '', '$ErrStr is blank when alt_stat() succeeds');
 
     unlink $file;
 
     Win32::UTCFileTime::alt_stat($file);
-    ok($ErrStr =~ /^Can't open file '\Q$file\E' for reading/);
+    like($ErrStr, qr/^Can't open file '\Q$file\E' for reading/,
+         '$ErrStr is set correctly when alt_stat() fails');
 
     open $fh, ">$file";
     close $fh;
 
     utime undef, undef, $file;
-    ok($ErrStr eq '');
+    is($ErrStr, '', '$ErrStr is blank when utime() succeeds');
 
     unlink $file;
 
     utime undef, undef, $file;
-    ok($ErrStr =~ /^Can't open file '\Q$file\E' for updating/);
+    like($ErrStr, qr/^Can't open file '\Q$file\E' for updating/,
+         '$ErrStr is set correctly when utime() fails');
 
     unlink $file;
 }

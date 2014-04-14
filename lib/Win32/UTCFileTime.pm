@@ -32,7 +32,7 @@ sub alt_stat(;$);
 sub utime(@);
 
 #===============================================================================
-# MODULE INITIALISATION
+# MODULE INITIALIZATION
 #===============================================================================
 
 our(@ISA, @EXPORT, @EXPORT_OK, $VERSION);
@@ -51,7 +51,7 @@ BEGIN {
         alt_stat
     );
     
-    $VERSION = '1.43';
+    $VERSION = '1.44';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -432,11 +432,11 @@ C<alt_stat()> function is only exported when explicitly requested.
 
 =item C<stat([$file])>
 
-Gets the status information for the file I<$file>.  If I<$file> is omitted then
-C<$_> is used instead.
+Gets the status information for the file $file.  If $file is omitted then C<$_>
+is used instead.
 
 In list context, returns the same 13-element list as Perl's built-in C<stat()>
-function on success, or returns an empty list and sets I<$ErrStr> on failure.
+function on success, or returns an empty list and sets $ErrStr on failure.
 
 For convenience, here are the members of that 13-element list and their meanings
 on Win32:
@@ -459,11 +459,11 @@ where the epoch was at 00:00:00 Jan 01 1970 UTC and the drive number of the disk
 is 0 for F<A:>, 1 for F<B:>, 2 for F<C:> and so on.
 
 Because the mode contains both the file type (the C<S_IFDIR> bit is set if
-I<$file> specifies a directory; the C<S_IFREG> bit is set if the I<$file>
-specifies a regular file) and its permissions (the user read/write bits are set
-according to the file's permission mode; the user execute bits are set according
-to the filename extension), you should mask off the file type portion and
-C<printf()> using a C<"%04o"> if you want to see the real permissions:
+$file specifies a directory; the C<S_IFREG> bit is set if the $file specifies a
+regular file) and its permissions (the user read/write bits are set according to
+the file's permission mode; the user execute bits are set according to the
+filename extension), you should mask off the file type portion and C<printf()>
+using a C<"%04o"> if you want to see the real permissions:
 
     $mode = (stat($filename))[2];
     printf "Permissions are %04o\n", $mode & 07777;
@@ -478,18 +478,18 @@ Note that you cannot use this module in conjunction with the File::stat module
 C<stat()> function.  Only the second override to be applied would have effect.
 
 In scalar context, returns a boolean value indicating success or failure (and
-sets I<$ErrStr> on failure).
+sets $ErrStr on failure).
 
 =item C<lstat([$link])>
 
-Gets the status information for the symbolic link I<$link>.  If I<$file> is
-omitted then C<$_> is used instead.  This is the same as C<stat()> on Win32,
-which doesn't implement symbolic links.
+Gets the status information for the symbolic link $link.  If $file is omitted
+then C<$_> is used instead.  This is the same as C<stat()> on Win32, which
+doesn't implement symbolic links.
 
 =item C<alt_stat([$file])>
 
-Gets the status information for the file I<$file>.  If I<$file> is omitted then
-C<$_> is used instead.
+Gets the status information for the file $file.  If $file is omitted then C<$_>
+is used instead.
 
 Behaves almost identically to C<stat()> above, but uses this module's own
 implementation of the standard C library C<stat(2)> function that can succeed in
@@ -499,10 +499,10 @@ As mentioned in the main L<"DESCRIPTION"> above, Microsoft's C<stat(2)>, and
 hence Perl's built-in C<stat()> and the replacement C<stat()> function above,
 calls the Win32 API function C<FindFirstFile()>.  That function is used to
 search a directory for a file, and thus requires the process to have "List
-Folder Contents" permission on the directory containing the I<$file> in
-question.  If that permission is denied then C<stat()> will fail.  It also has
-the disadvantage mentioned above that it will fail on directories specified with
-a trailing slash or backslash.
+Folder Contents" permission on the directory containing the $file in question.
+If that permission is denied then C<stat()> will fail.  It also has the
+disadvantage mentioned above that it will fail on directories specified with a
+trailing slash or backslash.
 
 C<alt_stat()> avoids both of these problems by using a different Win32 API
 function, C<CreateFile()>, instead.  That function opens a file directly and
@@ -524,12 +524,12 @@ C<stat()> functions.
 =item C<utime($atime, $mtime, @files)>
 
 Sets the last access time and last modification time to the values specified by
-I<$atime> and I<$mtime> respectively for each of the files in I<@files>.  The
-process must have write access to each of the files concerned in order to change
-these file times.
+$atime and $mtime respectively for each of the files in @files.  The process
+must have write access to each of the files concerned in order to change these
+file times.
 
-Returns the number of files successfully changed and sets I<$ErrStr> if one or
-more files could not be changed.
+Returns the number of files successfully changed and sets $ErrStr if one or more
+files could not be changed.
 
 The times should both be specified as the number of seconds since the epoch,
 where the epoch was at 00:00:00 Jan 01 1970 UTC.  If the undefined value is used
@@ -547,7 +547,7 @@ other operating systems.
 
 =over 4
 
-=item I<$ErrStr>
+=item $ErrStr
 
 Last error message.
 
@@ -555,14 +555,13 @@ If any function fails then a description of the last error will be set in this
 variable for use in reporting the cause of the failure, much like the use of the
 Perl Special Variables C<$!> and C<$^E> after failed system calls and Win32 API
 calls.  Note that C<$!> and/or C<$^E> may also be set on failure, but this is
-not always the case so it is better to check I<$ErrStr> instead.  Any relevant
-messages from C<$!> or C<$^E> will form part of the message in I<$ErrStr>
-anyway.  See L<"Error Values"> for a listing of the possible values of
-I<$ErrStr>.
+not always the case so it is better to check $ErrStr instead.  Any relevant
+messages from C<$!> or C<$^E> will form part of the message in $ErrStr anyway.
+See L<"Error Values"> for a listing of the possible values of $ErrStr.
 
 If a function succeeds then this variable will be set to the null string.
 
-=item I<$Try_Alt_Stat>
+=item $Try_Alt_Stat
 
 Control whether or not to try C<alt_stat()> if C<CORE::stat()> or
 C<CORE::lstat()> fails.
@@ -705,7 +704,7 @@ Win32::UTCFileTime module, but that constant is apparently not defined.
 
 =head2 Error Values
 
-Each function sets I<$ErrStr> to a value indicating the cause of the error when
+Each function sets $ErrStr to a value indicating the cause of the error when
 they fail.  The possible values are as follows:
 
 =over 4
@@ -756,9 +755,9 @@ filenames of this format.
 
 In some cases, the functions may also leave the Perl Special Variables C<$!>
 and/or C<$^E> set to values indicating the cause of the error when they fail;
-one or the other of these will be incorporated into the I<$ErrStr> message in
-such cases, as indicated above.  The possible values of each are as follows
-(C<$!> shown first, C<$^E> underneath):
+one or the other of these will be incorporated into the $ErrStr message in such
+cases, as indicated above.  The possible values of each are as follows (C<$!>
+shown first, C<$^E> underneath):
 
 =over 4
 
@@ -766,8 +765,8 @@ such cases, as indicated above.  The possible values of each are as follows
 
 =item ERROR_ACCESS_DENIED (Access is denied)
 
-[C<utime()> only.]  One or more of the I<@files> is read-only.  (The process
-must have write access to each file to be able to update its file times.)
+[C<utime()> only.]  One or more of the @files is read-only.  (The process must
+have write access to each file to be able to update its file times.)
 
 =item EMFILE (Too many open files)
 
@@ -780,7 +779,7 @@ opened in order to read file information from it or to update its file times.)
 
 =item ERROR_FILE_NOT_FOUND (The system cannot find the file specified)
 
-The filename or path in I<$file> was not found.
+The filename or path in $file was not found.
 
 =back
 
@@ -917,9 +916,9 @@ The result looks something like this (abridged to save space)
 
 On 27 October, Windows correctly reports that F<Bar.txt> was modified half an
 hour after F<Foo.txt>, but the next day, Windows has changed its mind and
-decided that actually, F<Bar.txt> was modified half an hour B<before>
+decided that actually, F<Bar.txt> was modified half an hour I<before>
 F<Foo.txt>.  A naive programmer might think this was a bug, but as Microsoft
-emphasized, B<this is how they want Windows to behave.>
+emphasized, I<this is how they want Windows to behave.>
 
 =head2 Why Windows has this problem
 
@@ -1108,7 +1107,7 @@ irrespective of the DST setting at the file modification time.
 =item *
 
 Local time is converted to "correct" UTC by private function.  Note that this
-B<does not> necessarily reverse the effect of the previous step because in this
+I<does not> necessarily reverse the effect of the previous step because in this
 step we use the DST setting of the I<file modification time>, not the current
 system time. 
 
@@ -1353,7 +1352,7 @@ I<file time being converted>.
 =item *
 
 Local time is converted UTC by C<LocalFileTimeToFileTime()>.  Note that this
-B<does not> reverse the effect of the previous step because in this step we use
+I<does not> reverse the effect of the previous step because in this step we use
 the DST setting of the I<current system time>, not the file time.
 
 =item *
@@ -1377,7 +1376,7 @@ I<file time being converted>.
 =item *
 
 Local time is converted UTC by C<LocalFileTimeToFileTime()>.  Note that this
-B<does not> reverse the effect of the previous step because in this step we use
+I<does not> reverse the effect of the previous step because in this step we use
 the DST setting of the I<current system time>, not the file time.
 
 =item *
@@ -1599,11 +1598,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.43
+Version 1.44
 
 =head1 DATE
 
-01 Jun 2005
+02 Sep 2005
 
 =head1 HISTORY
 

@@ -7,7 +7,7 @@
 #   Test script to check getting miscellaneous directory info.
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2004 Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -20,26 +20,21 @@ use 5.006000;
 use strict;
 use warnings;
 
-use Test;
+use Test::More tests => 28;
 
 #===============================================================================
-# INITIALISATION
+# INITIALIZATION
 #===============================================================================
 
 BEGIN {
-    plan tests => 37;                   # Number of tests to be executed
+    use_ok('Win32::UTCFileTime');
 }
-
-use Win32::UTCFileTime;
 
 #===============================================================================
 # MAIN PROGRAM
 #===============================================================================
 
 MAIN: {
-                                        # Test 1: Did we make it this far OK?
-    ok(1);
-
     my $dir = 'test';
 
     my(@cstats, @rstats, @astats);
@@ -50,81 +45,53 @@ MAIN: {
     @rstats = Win32::UTCFileTime::stat $dir;
     @astats = Win32::UTCFileTime::alt_stat($dir);
 
-                                        # Tests 2-3: Check "dev"
-    ok($rstats[0] == $cstats[0]);
-    ok($astats[0] == $cstats[0]);
+    is($rstats[0], $cstats[0], "stat() gets 'dev' field OK");
+    is($astats[0], $cstats[0], "alt_stat() gets 'dev' field OK");
 
-                                        # Tests 4-5: Check "ino"
-    ok($rstats[1] == $cstats[1]);
-    ok($astats[1] == $cstats[1]);
+    is($rstats[1], $cstats[1], "stat() gets 'ino' field OK");
+    is($astats[1], $cstats[1], "alt_stat() gets 'ino' field OK");
 
-                                        # Tests 6-7: Check "nlink"
-    ok($rstats[3] == $cstats[3]);
-    ok($astats[3] == $cstats[3]);
+    is($rstats[3], $cstats[3], "stat() gets 'nlink' field OK");
+    is($astats[3], $cstats[3], "alt_stat() gets 'nlink' field OK");
 
-                                        # Tests 8-9: Check "uid"
-    ok($rstats[4] == $cstats[4]);
-    ok($astats[4] == $cstats[4]);
+    is($rstats[4], $cstats[4], "stat() gets 'uid' field OK");
+    is($astats[4], $cstats[4], "alt_stat() gets 'uid' field OK");
 
-                                        # Tests 10-11: Check "gid"
-    ok($rstats[5] == $cstats[5]);
-    ok($astats[5] == $cstats[5]);
+    is($rstats[5], $cstats[5], "stat() gets 'gid' field OK");
+    is($astats[5], $cstats[5], "alt_stat() gets 'gid' field OK");
 
-                                        # Tests 12-13: Check "rdev"
-    ok($rstats[6] == $cstats[6]);
-    ok($astats[6] == $cstats[6]);
+    is($rstats[6], $cstats[6], "stat() gets 'rdev' field OK");
+    is($astats[6], $cstats[6], "alt_stat() gets 'rdev' field OK");
 
-                                        # Tests 14-15: Check "size"
-    ok($rstats[7] == $cstats[7]);
-    ok($astats[7] == $cstats[7]);
+    is($rstats[7], $cstats[7], "stat() gets 'size' field OK");
+    is($astats[7], $cstats[7], "alt_stat() gets 'size' field OK");
 
-                                        # Tests 16-17: Check "blksize"
-    ok($rstats[11] eq $cstats[11]);
-    ok($astats[11] eq $cstats[11]);
+    is($rstats[11], $cstats[11], "stat() gets 'blksize' field OK");
+    is($astats[11], $cstats[11], "alt_stat() gets 'blksize' field OK");
 
-                                        # Tests 18-19: Check "blocks"
-    ok($rstats[12] eq $cstats[12]);
-    ok($astats[12] eq $cstats[12]);
+    is($rstats[12], $cstats[12], "stat() gets 'blocks' field OK");
+    is($astats[12], $cstats[12], "alt_stat() gets 'blocks' field OK");
 
     @cstats = CORE::lstat $dir;
     @rstats = Win32::UTCFileTime::lstat $dir;
-    @astats = Win32::UTCFileTime::alt_stat($dir);
 
-                                        # Tests 20-21: Check "dev"
-    ok($rstats[0] == $cstats[0]);
-    ok($astats[0] == $cstats[0]);
+    is($rstats[0], $cstats[0], "lstat() gets 'dev' field OK");
 
-                                        # Tests 22-23: Check "ino"
-    ok($rstats[1] == $cstats[1]);
-    ok($astats[1] == $cstats[1]);
+    is($rstats[1], $cstats[1], "lstat() gets 'ino' field OK");
 
-                                        # Tests 24-25: Check "nlink"
-    ok($rstats[3] == $cstats[3]);
-    ok($astats[3] == $cstats[3]);
+    is($rstats[3], $cstats[3], "lstat() gets 'nlink' field OK");
 
-                                        # Tests 26-27: Check "uid"
-    ok($rstats[4] == $cstats[4]);
-    ok($astats[4] == $cstats[4]);
+    is($rstats[4], $cstats[4], "lstat() gets 'uid' field OK");
 
-                                        # Tests 28-29: Check "gid"
-    ok($rstats[5] == $cstats[5]);
-    ok($astats[5] == $cstats[5]);
+    is($rstats[5], $cstats[5], "lstat() gets 'gid' field OK");
 
-                                        # Tests 30-31: Check "rdev"
-    ok($rstats[6] == $cstats[6]);
-    ok($astats[6] == $cstats[6]);
+    is($rstats[6], $cstats[6], "lstat() gets 'rdev' field OK");
 
-                                        # Tests 32-33: Check "size"
-    ok($rstats[7] == $cstats[7]);
-    ok($astats[7] == $cstats[7]);
+    is($rstats[7], $cstats[7], "lstat() gets 'size' field OK");
 
-                                        # Tests 34-35: Check "blksize"
-    ok($rstats[11] eq $cstats[11]);
-    ok($astats[11] eq $cstats[11]);
+    is($rstats[11], $cstats[11], "lstat() gets 'blksize' field OK");
 
-                                        # Tests 36-37: Check "blocks"
-    ok($rstats[12] eq $cstats[12]);
-    ok($astats[12] eq $cstats[12]);
+    is($rstats[12], $cstats[12], "lstat() gets 'blocks' field OK");
 
     rmdir $dir;
 }

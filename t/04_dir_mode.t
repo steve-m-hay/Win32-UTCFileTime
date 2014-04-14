@@ -7,7 +7,7 @@
 #   Test script to check getting directory mode.
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2004 Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -20,61 +20,54 @@ use 5.006000;
 use strict;
 use warnings;
 
-use Test;
+use Test::More tests => 7;
 
 #===============================================================================
-# INITIALISATION
+# INITIALIZATION
 #===============================================================================
 
 BEGIN {
-    plan tests => 9;                    # Number of tests to be executed
+    use_ok('Win32::UTCFileTime');
 }
-
-use Win32::UTCFileTime;
 
 #===============================================================================
 # MAIN PROGRAM
 #===============================================================================
 
 MAIN: {
-                                        # Test 1: Did we make it this far OK?
-    ok(1);
-
     my $dir = 'test';
 
     my(@cstats, @rstats, @astats);
 
     mkdir $dir or die "Can't create directory '$dir': $!\n";
 
-                                        # Tests 2-5: Check stat() functions
     chmod 0777, $dir;
     @cstats = CORE::stat $dir;
     @rstats = Win32::UTCFileTime::stat $dir;
     @astats = Win32::UTCFileTime::alt_stat($dir);
-    ok($rstats[2] == $cstats[2]);
-    ok($astats[2] == $cstats[2]);
+    is($rstats[2], $cstats[2],
+       "stat() works for executable directory");
+    is($astats[2], $cstats[2],
+       "alt_stat() works for executable directory");
+
+    @cstats = CORE::lstat $dir;
+    @rstats = Win32::UTCFileTime::lstat $dir;
+    is($rstats[2], $cstats[2],
+       "lstat() works for executable directory");
 
     chmod 0444, $dir;
     @cstats = CORE::stat $dir;
     @rstats = Win32::UTCFileTime::stat $dir;
     @astats = Win32::UTCFileTime::alt_stat($dir);
-    ok($rstats[2] == $cstats[2]);
-    ok($astats[2] == $cstats[2]);
+    is($rstats[2], $cstats[2],
+       "stat() works for read-only directory");
+    is($astats[2], $cstats[2],
+       "alt_stat() works for read-only directory");
 
-                                        # Tests 6-9: Check lstat() functions
-    chmod 0777, $dir;
     @cstats = CORE::lstat $dir;
     @rstats = Win32::UTCFileTime::lstat $dir;
-    @astats = Win32::UTCFileTime::alt_stat($dir);
-    ok($rstats[2] == $cstats[2]);
-    ok($astats[2] == $cstats[2]);
-
-    chmod 0444, $dir;
-    @cstats = CORE::lstat $dir;
-    @rstats = Win32::UTCFileTime::lstat $dir;
-    @astats = Win32::UTCFileTime::alt_stat($dir);
-    ok($rstats[2] == $cstats[2]);
-    ok($astats[2] == $cstats[2]);
+    is($rstats[2], $cstats[2],
+       "lstat() works for read-only directory");
 
     chmod 0777, $dir;
     rmdir $dir;

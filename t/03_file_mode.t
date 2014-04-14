@@ -7,7 +7,7 @@
 #   Test script to check getting file mode.
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2004 Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2005 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -20,26 +20,21 @@ use 5.006000;
 use strict;
 use warnings;
 
-use Test;
+use Test::More tests => 31;
 
 #===============================================================================
-# INITIALISATION
+# INITIALIZATION
 #===============================================================================
 
 BEGIN {
-    plan tests => 41;                   # Number of tests to be executed
+    use_ok('Win32::UTCFileTime');
 }
-
-use Win32::UTCFileTime;
 
 #===============================================================================
 # MAIN PROGRAM
 #===============================================================================
 
 MAIN: {
-                                        # Test 1: Did we make it this far OK?
-    ok(1);
-
     my @files = map { "test.$_" } qw(txt exe bat com cmd);
 
     my(@cstats, @rstats, @astats);
@@ -49,38 +44,34 @@ MAIN: {
         close $fh;
     }
 
-                                        # Tests 2-21: Check stat() functions
     foreach my $file (@files) {
         chmod 0777, $file;
         @cstats = CORE::stat $file;
         @rstats = Win32::UTCFileTime::stat $file;
         @astats = Win32::UTCFileTime::alt_stat($file);
-        ok($rstats[2] == $cstats[2]);
-        ok($astats[2] == $cstats[2]);
+        is($rstats[2], $cstats[2],
+           "stat() works for executable file $file");
+        is($astats[2], $cstats[2],
+           "alt_stat() works for executable file $file");
+
+        @cstats = CORE::lstat $file;
+        @rstats = Win32::UTCFileTime::lstat $file;
+        is($rstats[2], $cstats[2],
+           "lstat() works for executable file $file");
 
         chmod 0444, $file;
         @cstats = CORE::stat $file;
         @rstats = Win32::UTCFileTime::stat $file;
         @astats = Win32::UTCFileTime::alt_stat($file);
-        ok($rstats[2] == $cstats[2]);
-        ok($astats[2] == $cstats[2]);
-    }
+        is($rstats[2], $cstats[2],
+           "stat() works for read-only file $file");
+        is($astats[2], $cstats[2],
+           "alt_stat() works for read-only file $file");
 
-                                        # Tests 22-41: Check lstat() functions
-    foreach my $file (@files) {
-        chmod 0777, $file;
         @cstats = CORE::lstat $file;
         @rstats = Win32::UTCFileTime::lstat $file;
-        @astats = Win32::UTCFileTime::alt_stat($file);
-        ok($rstats[2] == $cstats[2]);
-        ok($astats[2] == $cstats[2]);
-
-        chmod 0444, $file;
-        @cstats = CORE::lstat $file;
-        @rstats = Win32::UTCFileTime::lstat $file;
-        @astats = Win32::UTCFileTime::alt_stat($file);
-        ok($rstats[2] == $cstats[2]);
-        ok($astats[2] == $cstats[2]);
+        is($rstats[2], $cstats[2],
+           "lstat() works for read-only file $file");
     }
 
     foreach my $file (@files) {
