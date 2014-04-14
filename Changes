@@ -1,9 +1,17 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.40
+                        Win32::UTCFileTime, Version 1.41
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.41 12 Dec 2004
+
+    - Moved XSLoader::load() call inside BEGIN subroutine as recommended by the
+      XSLoader manpage.  This means that the XSUB's are now installed before the
+      rest of the Perl module is compiled, and hence their prototypes are now
+      known, and can be checked, during the remaining compilation.
 _________________
 
 v1.40 31 Oct 2004

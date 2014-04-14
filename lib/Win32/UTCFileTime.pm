@@ -51,7 +51,9 @@ BEGIN {
         alt_stat
     );
     
-    $VERSION = '1.40';
+    $VERSION = '1.41';
+
+    XSLoader::load(__PACKAGE__, $VERSION);
 }
 
 # Last error message.
@@ -60,8 +62,6 @@ our $ErrStr = '';
 # Control whether or not to try alt_stat() if CORE::stat() or CORE::lstat()
 # fails.  (Boolean.)
 our $Try_Alt_Stat = 0;
-
-XSLoader::load(__PACKAGE__, $VERSION);
 
 #===============================================================================
 # PUBLIC API
@@ -1595,11 +1595,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.40
+Version 1.41
 
 =head1 DATE
 
-31 Oct 2004
+12 Dec 2004
 
 =head1 HISTORY
 

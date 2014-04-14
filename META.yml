@@ -1,5 +1,5 @@
 name: Win32-UTCFileTime
-version: 1.40
+version: 1.41
 abstract: Get/set UTC file times with stat/utime on Win32
 author: Steve Hay <shay@cpan.org>
 license: perl
