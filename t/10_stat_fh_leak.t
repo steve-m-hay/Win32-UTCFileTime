@@ -1,13 +1,13 @@
 #!perl
 #===============================================================================
 #
-# t/09_stat_fh_leak.t
+# t/10_stat_fh_leak.t
 #
 # DESCRIPTION
 #   Test script to check if stat(), lstat() or alt_stat() leak filehandles.
 #
 # COPYRIGHT
-#   Copyright (C) 2012 Steve Hay.  All rights reserved.
+#   Copyright (C) 2012, 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -15,7 +15,7 @@
 #
 #===============================================================================
 
-use 5.006000;
+use 5.008001;
 
 use strict;
 use warnings;

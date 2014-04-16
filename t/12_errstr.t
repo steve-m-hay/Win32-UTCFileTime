@@ -1,13 +1,13 @@
 #!perl
 #===============================================================================
 #
-# t/11_errstr.t
+# t/12_errstr.t
 #
 # DESCRIPTION
 #   Test script to check $ErrStr variable.
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2005, 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -15,7 +15,7 @@
 #
 #===============================================================================
 
-use 5.006000;
+use 5.008001;
 
 use strict;
 use warnings;
@@ -48,7 +48,7 @@ MAIN: {
     unlink $file;
 
     stat $file;
-    like($ErrStr, qr/^Can't stat file '\Q$file\E'/,
+    like($ErrStr, qr/^Can't stat file '\Q$file\E'/o,
          '$ErrStr is set correctly when stat() fails');
 
     open $fh, ">$file";
@@ -60,7 +60,7 @@ MAIN: {
     unlink $file;
 
     lstat $file;
-    like($ErrStr, qr/^Can't stat link '\Q$file\E'/,
+    like($ErrStr, qr/^Can't stat link '\Q$file\E'/o,
          '$ErrStr is set correctly when lstat() fails');
 
     open $fh, ">$file";
@@ -72,7 +72,7 @@ MAIN: {
     unlink $file;
 
     Win32::UTCFileTime::alt_stat($file);
-    like($ErrStr, qr/^Can't open file '\Q$file\E' for reading/,
+    like($ErrStr, qr/^Can't open file '\Q$file\E' for reading/o,
          '$ErrStr is set correctly when alt_stat() fails');
 
     open $fh, ">$file";
@@ -84,7 +84,7 @@ MAIN: {
     unlink $file;
 
     utime undef, undef, $file;
-    like($ErrStr, qr/^Can't open file '\Q$file\E' for updating/,
+    like($ErrStr, qr/^Can't open file '\Q$file\E' for updating/o,
          '$ErrStr is set correctly when utime() fails');
 
     unlink $file;

@@ -6,7 +6,7 @@
  *   C and XS portions of Win32::UTCFileTime module.
  *
  * COPYRIGHT
- *   Copyright (C) 2003-2006, 2008, 2012 Steve Hay.  All rights reserved.
+ *   Copyright (C) 2003-2006, 2008, 2012, 2014 Steve Hay.  All rights reserved.
  *   Portions Copyright (C) 2001 Jonathan M Gilligan.  Used with permission.
  *   Portions Copyright (C) 2001 Tony M Hoyle.  Used with permission.
  *
@@ -20,34 +20,30 @@
  * C CODE SECTION
  *============================================================================*/
 
+                                        /* For _getdrive().                   */
 #ifdef __BORLANDC__
-#  include <dos.h>                      /* For _getdrive().                   */
+#  include <dos.h>
 #else
-#  include <direct.h>                   /* For _getdrive().                   */
+#  include <direct.h>
 #endif
-#include <errno.h>                      /* For EACCES.                        */
 #include <fcntl.h>                      /* For the O_* flags.                 */
-#include <io.h>                         /* For _get_osfhandle().              */
+#include <io.h>                         /* For open() and close().            */
+#include <stdarg.h>                     /* For va_list/va_start()/va_end().   */
+#include <stdio.h>                      /* For sprintf().                     */
 #include <stdlib.h>                     /* For errno.                         */
 #include <string.h>                     /* For the str*() functions.          */
-#include <sys/types.h>                  /* For struct stat.                   */
 #include <sys/stat.h>                   /* For struct stat and the S_* flags. */
 
-#define WIN32_LEAN_AND_MEAN             /* Do not pull in too much crap when  */
-                                        /* including <windows.h> next.        */
+#define WIN32_LEAN_AND_MEAN             /* To exclude unnecessary headers.    */
 #include <windows.h>                    /* For the Win32 API stuff.           */
 
-#define PERL_NO_GET_CONTEXT             /* See the "perlguts" manpage.        */
-
-#include "patchlevel.h"                 /* Get the version numbers first.     */
-
-#if (PERL_REVISION == 5 && PERL_VERSION > 6)
-#  define PERLIO_NOT_STDIO 0            /* See the "perlapio" manpage.        */
-#endif
-
+#define PERL_NO_GET_CONTEXT             /* To get interp context efficiently. */
+#define PERLIO_NOT_STDIO 0              /* To allow use of PerlIO and stdio.  */
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+
+#define NEED_newSVpvn_flags             /* For newSVpvs_flags().              */
 #include "ppport.h"
 
 #include "const-c.inc"
@@ -83,18 +79,18 @@ typedef dev_t _dev_t;
 #define WIN32_UTCFILETIME_WIN_ERR_STR \
     (Win32UTCFileTime_StrWinError(aTHX_ aMY_CXT_ GetLastError()))
 
-static BOOL Win32UTCFileTime_IsWinNT(pTHX_ pMY_CXT);
-static BOOL Win32UTCFileTime_FileTimeToUnixTime(pTHX_ pMY_CXT_
+static bool Win32UTCFileTime_IsWinNT(pTHX_ pMY_CXT);
+static bool Win32UTCFileTime_FileTimeToUnixTime(pTHX_ pMY_CXT_
     const FILETIME *ft, time_t *ut);
-static BOOL Win32UTCFileTime_UnixTimeToFileTime(pTHX_ pMY_CXT_
+static bool Win32UTCFileTime_UnixTimeToFileTime(pTHX_ pMY_CXT_
     const time_t ut, FILETIME *ft);
 static unsigned short Win32UTCFileTime_FileAttributesToUnixMode(pTHX_ pMY_CXT_
     const DWORD fa, const char *name);
 static int Win32UTCFileTime_AltStat(pTHX_ pMY_CXT_ const char *name,
     struct stat *st_buf);
-static BOOL Win32UTCFileTime_GetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
+static bool Win32UTCFileTime_GetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
     time_t *u_atime_t, time_t *u_mtime_t, time_t *u_ctime_t);
-static BOOL Win32UTCFileTime_SetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
+static bool Win32UTCFileTime_SetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
     const time_t u_atime_t, const time_t u_mtime_t);
 static char *Win32UTCFileTime_StrWinError(pTHX_ pMY_CXT_ DWORD err_num);
 static void Win32UTCFileTime_SetErrStr(pTHX_ const char *value, ...);
@@ -124,11 +120,11 @@ static FILETIME win32_utcfiletime_base_ft;
  * opposed to Win32s, Windows [95/98/ME] or Windows CE).
  */
 
-static BOOL Win32UTCFileTime_IsWinNT(pTHX_ pMY_CXT) {
+static bool Win32UTCFileTime_IsWinNT(pTHX_ pMY_CXT) {
     /* These statics are set "on demand" and are not subsequently changed, so
      * are virtually "consts"s and are therefore thread-safe. */
-    static BOOL initialized = FALSE;
-    static BOOL is_winnt;
+    static bool initialized = FALSE;
+    static bool is_winnt;
     OSVERSIONINFO osver;
 
     if (!initialized) {
@@ -155,7 +151,7 @@ static BOOL Win32UTCFileTime_IsWinNT(pTHX_ pMY_CXT) {
  * This function is based on code written by Jonathan M Gilligan.
  */
 
-static BOOL Win32UTCFileTime_FileTimeToUnixTime(pTHX_ pMY_CXT_
+static bool Win32UTCFileTime_FileTimeToUnixTime(pTHX_ pMY_CXT_
     const FILETIME *ft, time_t *ut)
 {
     ULARGE_INTEGER it;
@@ -179,7 +175,7 @@ static BOOL Win32UTCFileTime_FileTimeToUnixTime(pTHX_ pMY_CXT_
  * This function is based on code written by Tony M Hoyle.
  */
 
-static BOOL Win32UTCFileTime_UnixTimeToFileTime(pTHX_ pMY_CXT_
+static bool Win32UTCFileTime_UnixTimeToFileTime(pTHX_ pMY_CXT_
     const time_t ut, FILETIME *ft)
 {
     ULARGE_INTEGER it;
@@ -203,13 +199,14 @@ static BOOL Win32UTCFileTime_UnixTimeToFileTime(pTHX_ pMY_CXT_
  * struct stat.
  *
  * This function is based on code taken from the wnt_stat() function in CVSNT
- * (version 2.0.4) the win32_stat() function in Perl (version 5.8.0).
+ * (version 2.0.4) the win32_stat() function in Perl (version 5.19.10).
  */
 
 static unsigned short Win32UTCFileTime_FileAttributesToUnixMode(pTHX_ pMY_CXT_
     const DWORD fa, const char *name)
 {
     unsigned short st_mode = 0;
+    unsigned short perms;
     size_t len;
     const char *p;
 
@@ -219,27 +216,38 @@ static unsigned short Win32UTCFileTime_FileAttributesToUnixMode(pTHX_ pMY_CXT_
         st_mode |= _S_IFREG;
 
     if (fa & FILE_ATTRIBUTE_READONLY)
-        st_mode |= (  _S_IREAD       +
-                     (_S_IREAD >> 3) +
-                     (_S_IREAD >> 6));
+        st_mode |= _S_IREAD;
     else
-        st_mode |= ( (_S_IREAD | _S_IWRITE)       +
-                    ((_S_IREAD | _S_IWRITE) >> 3) +
-                    ((_S_IREAD | _S_IWRITE) >> 6));
+        st_mode |= _S_IREAD | _S_IWRITE;
 
+    /* Write permission used to be turned on for directories with Borland, but
+     * only until a change in 5.11.0, backported to 5.8.9 and 5.10.1. */
     if (fa & FILE_ATTRIBUTE_DIRECTORY)
-        st_mode |= (  _S_IEXEC       +
-                     (_S_IEXEC >> 3) +
-                     (_S_IEXEC >> 6));
+#if defined(__BORLANDC__) && PERL_REVISION == 5 && \
+            ((PERL_VERSION ==  8 && PERL_SUBVERSION < 9) || \
+              PERL_VERSION ==  9 || \
+             (PERL_VERSION == 10 && PERL_SUBVERSION < 1))
+        st_mode |= _S_IEXEC | _S_IWRITE;
+#else
+        st_mode |= _S_IEXEC;
+#endif
 
     len = strlen(name);
     if (len >= 4 && (*(p = name + len - 4) == '.') &&
             (!stricmp(p, ".exe") ||  !stricmp(p, ".bat") ||
              !stricmp(p, ".com") || (!stricmp(p, ".cmd") &&
                                      Win32UTCFileTime_IsWinNT(aTHX_ aMY_CXT))))
-        st_mode |= (  _S_IEXEC       +
-                     (_S_IEXEC >> 3) +
-                     (_S_IEXEC >> 6));
+        st_mode |= _S_IEXEC;
+
+    /* Propagate permissions to "group" and "others". */
+#ifdef __BORLANDC__
+    if (!(fa & FILE_ATTRIBUTE_DIRECTORY)) {
+#endif
+    perms = st_mode & (_S_IREAD | _S_IWRITE | _S_IEXEC);
+    st_mode |= (perms >> 3) | (perms >> 6);
+#ifdef __BORLANDC__
+    }
+#endif
 
     return st_mode;
 }
@@ -251,7 +259,7 @@ static unsigned short Win32UTCFileTime_FileAttributesToUnixMode(pTHX_ pMY_CXT_
  * file is stored in.
  *
  * This function is based on code taken from the wnt_stat() function in CVSNT
- * (version 2.0.4) and the win32_stat() function in Perl (version 5.8.0).
+ * (version 2.0.4) and the win32_stat() function in Perl (version 5.19.10).
  */
 
 static int Win32UTCFileTime_AltStat(pTHX_ pMY_CXT_ const char *name,
@@ -271,24 +279,18 @@ static int Win32UTCFileTime_AltStat(pTHX_ pMY_CXT_ const char *name,
     Zero(&bhfi, 1, BY_HANDLE_FILE_INFORMATION);
 
     /* Use CreateFile() and GetFileInformationByHandle(), rather than
-     * FindFirstFile() like Microsoft's stat() does, for four reasons:
+     * FindFirstFile() like Microsoft's stat() does, for three reasons:
      * (1) CreateFile() does not require "List Folder Contents" permission on
      *     the parent directory like FindFirstFile() does;
-     * (2) It works for directories specified with a trailing slash or backslash
-     *     and it works for root (drive or UNC) directories like C: and
-     *     \\SERVER\SHARE, with or without a trailing slash or backslash
-     *     (provided that this is a Windows NT platform and the
-     *     FILE_FLAG_BACKUP_SEMANTICS flag is passed to allow directory handles
-     *     to be obtained), whereas FindFirstFile() requires non-root
-     *     directories to not have a trailing slash or backslash and requires
-     *     root directories to have a trailing \*; and
-     * (3) The BY_HANDLE_FILE_INFORMATION structure returned by
+     * (2) The BY_HANDLE_FILE_INFORMATION structure returned by
      *     GetFileInformationByHandle() contains the number of links to the
      *     file, which the WIN32_FIND_DATA structure returned by FindFirstFile()
      *     does not; and most importantly
-     * (4) The file times in that structure are correct UTC times on both NTFS
+     * (3) The file times in that structure are correct UTC times on both NTFS
      *     and FAT, whereas on FAT the file times in the WIN32_FIND_DATA
-     *     structure are sometimes wrong w.r.t. DST season changes. */
+     *     structure are sometimes wrong w.r.t. DST season changes
+     * Pass the FILE_FLAG_BACKUP_SEMANTICS flag to allow directory handles to be
+     * obtained (provided that this is a Windows NT platform). */
     if ((hndl = CreateFile(name, 0, 0, NULL, OPEN_EXISTING,
             FILE_FLAG_BACKUP_SEMANTICS, NULL)) == INVALID_HANDLE_VALUE)
     {
@@ -305,6 +307,7 @@ static int Win32UTCFileTime_AltStat(pTHX_ pMY_CXT_ const char *name,
             st_buf->st_mode =
                 Win32UTCFileTime_FileAttributesToUnixMode(aTHX_ aMY_CXT_
                                                           fa, name);
+            errno = 0;
             return 0;
         }
         else {
@@ -375,7 +378,7 @@ static int Win32UTCFileTime_AltStat(pTHX_ pMY_CXT_ const char *name,
  * This function is based on code written by Jonathan M Gilligan.
  */
 
-static BOOL Win32UTCFileTime_GetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
+static bool Win32UTCFileTime_GetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
     time_t *u_atime_t, time_t *u_mtime_t, time_t *u_ctime_t)
 {
     HANDLE hndl;
@@ -430,11 +433,11 @@ static BOOL Win32UTCFileTime_GetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
  * whatever filesystem the file is stored in.
  */
 
-static BOOL Win32UTCFileTime_SetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
+static bool Win32UTCFileTime_SetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
     const time_t u_atime_t, const time_t u_mtime_t)
 {
     int fd;
-    BOOL ret = FALSE;
+    bool ret = FALSE;
     HANDLE hndl;
     FILETIME u_atime_ft;
     FILETIME u_mtime_ft;
@@ -442,13 +445,13 @@ static BOOL Win32UTCFileTime_SetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
     /* Try opening the file normally first, like Microsoft's utime(), and hence
      * Perl's win32_utime(), does.  Note that this will fail (with errno EACCES)
      * if name specifies a directory or a read-only file. */
-    if ((fd = PerlLIO_open(name, O_RDWR | O_BINARY)) < 0) {
-        /* If name is a directory then PerlLIO_open() will fail.  However,
-         * CreateFile() can open directory handles (provided that this is a
-         * Windows NT platform and the FILE_FLAG_BACKUP_SEMANTICS flag is passed
-         * to allow directory handles to be obtained), so try that instead like
-         * Perl's win32_utime() does in case that was the cause of the failure.
-         * This will (and should) still fail on read-only files. */
+    if ((fd = open(name, O_RDWR | O_BINARY)) < 0) {
+        /* If name is a directory then open() will fail.  However, CreateFile()
+         * can open directory handles (provided that this is a Windows NT
+         * platform and the FILE_FLAG_BACKUP_SEMANTICS flag is passed to allow
+         * directory handles to be obtained), so try that instead like Perl's
+         * win32_utime() does in case that was the cause of the failure.  This
+         * will (and should) still fail on read-only files. */
         if ((hndl = CreateFile(name, GENERIC_READ | GENERIC_WRITE,
                 FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
                 FILE_FLAG_BACKUP_SEMANTICS, NULL)) == INVALID_HANDLE_VALUE)
@@ -460,28 +463,16 @@ static BOOL Win32UTCFileTime_SetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
             return FALSE;
         }
     }
-    else if ((hndl = (HANDLE)_get_osfhandle(fd)) == INVALID_HANDLE_VALUE) {
-        /* If Perl is linked against the OS's msvcrt.dll and this module is
-         * linked against a recent Visual C++ compiler's msvcrXX.dll then the
-         * file descriptor obtained by the former via PerlLIO_open() cannot be
-         * used by the latter, so _get_osfhandle() will fail.  In case that was
-         * the cause of the failure, we close the file descriptor and try the
-         * Win32 API function CreateFile() directly instead. */
-        if (PerlLIO_close(fd) < 0)
-            warn("Can't close file descriptor '%d' for file '%s': %s",
-                 fd, name, WIN32_UTCFILETIME_SYS_ERR_STR);
-        fd = -1;
-
-        if ((hndl = CreateFile(name, GENERIC_READ | GENERIC_WRITE,
-                FILE_SHARE_READ | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0,
-                NULL)) == INVALID_HANDLE_VALUE)
-        {
-            Win32UTCFileTime_SetErrStr(aTHX_
-                "Can't open file '%s' for updating: %s",
-                name, WIN32_UTCFILETIME_WIN_ERR_STR
-            );
-            return FALSE;
-        }
+    else if ((hndl = (HANDLE)win32_get_osfhandle(fd)) == INVALID_HANDLE_VALUE) {
+        Win32UTCFileTime_SetErrStr(aTHX_
+            "Can't get file object handle after opening file '%s' for "
+            "updating as file descriptor '%d': %s",
+            name, WIN32_UTCFILETIME_SYS_ERR_STR
+        );
+        WIN32_UTCFILETIME_SAVE_ERRS;
+        close(fd);
+        WIN32_UTCFILETIME_RESTORE_ERRS;
+        return FALSE;
     }
 
     /* Use NULL for the creation time passed to SetFileTime() like Microsoft's
@@ -514,7 +505,7 @@ static BOOL Win32UTCFileTime_SetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
      * Otherwise we only have a file object handle open, so just close that
      * directly. */
     if (fd >= 0) {
-        if (PerlLIO_close(fd) < 0)
+        if (close(fd) < 0)
             warn("Can't close file descriptor '%d' for file '%s' after "
                  "updating: %s", fd, name, WIN32_UTCFILETIME_SYS_ERR_STR);
     }
@@ -534,7 +525,7 @@ static BOOL Win32UTCFileTime_SetUTCFileTimes(pTHX_ pMY_CXT_ const char *name,
  * function from a given thread will overwrite the string.
  *
  * This function is based on the win32_str_os_error() function in Perl (version
- * 5.8.5).
+ * 5.19.10).
  */
 
 static char *Win32UTCFileTime_StrWinError(pTHX_ pMY_CXT_ DWORD err_num) {
@@ -616,7 +607,7 @@ CLONE(...)
 
 # Private function to expose the Win32UTCFileTime_AltStat() function above.
 # This function is based on code taken from the pp_stat() function in Perl
-# (version 5.8.0).
+# (version 5.19.10).
 
 void
 _alt_stat(file)
@@ -637,19 +628,36 @@ _alt_stat(file)
             }
             else if (gimme == G_ARRAY) {
                 EXTEND(SP, 13);
-                PUSHs(sv_2mortal(newSViv((IV)st_buf.st_dev)));
-                PUSHs(sv_2mortal(newSViv((IV)st_buf.st_ino)));
-                PUSHs(sv_2mortal(newSVuv((UV)st_buf.st_mode)));
-                PUSHs(sv_2mortal(newSVuv((UV)st_buf.st_nlink)));
-                PUSHs(sv_2mortal(newSViv((IV)st_buf.st_uid)));
-                PUSHs(sv_2mortal(newSViv((IV)st_buf.st_gid)));
-                PUSHs(sv_2mortal(newSViv((IV)st_buf.st_rdev)));
-                PUSHs(sv_2mortal(newSVnv((NV)st_buf.st_size)));
-                PUSHs(sv_2mortal(newSViv((IV)st_buf.st_atime)));
-                PUSHs(sv_2mortal(newSViv((IV)st_buf.st_mtime)));
-                PUSHs(sv_2mortal(newSViv((IV)st_buf.st_ctime)));
-                PUSHs(sv_2mortal(newSVpvn("", 0)));
-                PUSHs(sv_2mortal(newSVpvn("", 0)));
+
+                mPUSHi((IV)st_buf.st_dev);
+
+                /* ST_INO_SIZE (4) <= IVSIZE (4 or 8) and ST_INO_SIGN == 1 */
+                mPUSHu((UV)st_buf.st_ino);
+
+                mPUSHu((UV)st_buf.st_mode);
+                mPUSHu((UV)st_buf.st_nlink);
+
+                /* Uid_t_size (4) <= IVSIZE (4 or 8) and Uid_t_sign == -1 */
+                mPUSHi((IV)st_buf.st_uid);
+
+                /* Gid_t_size (4) <= IVSIZE (4 or 8) and Gid_t_sign == -1 */
+                mPUSHi((IV)st_buf.st_gid);
+
+                /* USE_STAT_RDEV is defined */
+                mPUSHi((IV)st_buf.st_rdev);
+
+                /* Off_t_size (4 or 8) <= IVSIZE (4 or 8) */
+                mPUSHi((IV)st_buf.st_size);
+
+                /* BIG_TIME not defined */
+                mPUSHi((IV)st_buf.st_atime);
+                mPUSHi((IV)st_buf.st_mtime);
+                mPUSHi((IV)st_buf.st_ctime);
+                
+                /* USE_STAT_BLOCKS is not defined */
+                PUSHs(newSVpvs_flags("", SVs_TEMP));
+                PUSHs(newSVpvs_flags("", SVs_TEMP));
+
                 XSRETURN(13);
             }
             else {
@@ -682,9 +690,12 @@ _get_utc_file_times(file)
                 file, &atime, &mtime, &ctime))
         {
             EXTEND(SP, 3);
-            PUSHs(sv_2mortal(newSViv((IV)atime)));
-            PUSHs(sv_2mortal(newSViv((IV)mtime)));
-            PUSHs(sv_2mortal(newSViv((IV)ctime)));
+
+            /* BIG_TIME not defined */
+            mPUSHi((IV)atime);
+            mPUSHi((IV)mtime);
+            mPUSHi((IV)ctime);
+
             XSRETURN(3);
         }
         else {

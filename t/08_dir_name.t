@@ -1,13 +1,13 @@
 #!perl
 #===============================================================================
 #
-# t/07_dir_name.t
+# t/08_dir_name.t
 #
 # DESCRIPTION
 #   Test script to check getting information for various directory names.
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2006 Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2006, 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -15,7 +15,7 @@
 #
 #===============================================================================
 
-use 5.006000;
+use 5.008001;
 
 use strict;
 use warnings;
@@ -45,7 +45,7 @@ MAIN: {
     # scalar context to exercise all the features of each function.  (Some code
     # is skipped when they are called in scalar context.)
 
-    $drive =~ s/[\\\/]$//;
+    $drive =~ s/[\\\/]$//o;
     @stats = Win32::UTCFileTime::stat $drive;
     ($errno, $lasterror) = ($!, $^E);
     ok(scalar @stats, "stat() works on 'drive:'") or
@@ -98,7 +98,7 @@ MAIN: {
     ok(scalar @stats, "alt_stat() works on 'drive:/'") or
         diag("\$! = '$errno', \$^E = '$lasterror'");
 
-    $dir =~ s/[\\\/]$//;
+    $dir =~ s/[\\\/]$//o;
     @stats = Win32::UTCFileTime::stat $dir;
     ($errno, $lasterror) = ($!, $^E);
     ok(scalar @stats, "stat() works on 'dir'") or

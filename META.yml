@@ -3,44 +3,33 @@ abstract: 'Get/set UTC file times with stat/utime on Win32'
 author:
   - 'Steve Hay <shay@cpan.org>'
 build_requires:
-  ExtUtils::MakeMaker: 6.59
-  Test::More: 0
+  Config: '0'
+  ExtUtils::MakeMaker: '0'
+  File::Spec::Functions: '0'
+  Test::More: '0'
+  strict: '0'
+  warnings: '0'
 configure_requires:
-  Carp: 0
-  Config: 0
-  Cwd: 0
-  ExtUtils::MakeMaker: 6.59
-  File::Basename: 0
-  File::Copy: 0
-  File::Find: 0
-  File::Path: 0
-  File::Spec: 0
-  File::Spec::Functions: 0
-  FindBin: 0
-  Getopt::Long: 0
-  Pod::Usage: 0
-  Text::Wrap: 0
-  parent: 0
-  strict: 0
-  vars: 0
-  warnings: 0
-distribution_type: module
+  ExtUtils::MakeMaker: '6.66'
+  File::Copy: '0'
+  File::Spec::Functions: '0'
+  strict: '0'
+  warnings: '0'
 dynamic_config: 1
-generated_by: 'Module::Install version 1.06'
+generated_by: 'ExtUtils::MakeMaker version 6.96, CPAN::Meta::Converter version 2.140640'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
-  version: 1.4
+  version: '1.4'
 name: Win32-UTCFileTime
 no_index:
   directory:
-    - inc
     - t
+    - inc
 requires:
-  Exporter: 0
-  Test::Pod: 1.00
-  XSLoader: 0
-  perl: 5.6.0
+  Exporter: '0'
+  XSLoader: '0'
+  perl: '5.008001'
 resources:
-  license: http://dev.perl.org/licenses/
-version: 1.56
+  repository: git://github.com/steve-m-hay/Win32-UTCFileTime.git
+version: '1.57'

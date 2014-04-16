@@ -1,13 +1,13 @@
 #!perl
 #===============================================================================
 #
-# t/05_file_misc.t
+# t/06_file_misc.t
 #
 # DESCRIPTION
 #   Test script to check getting miscellaneous file information.
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2005 Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2005, 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -15,7 +15,7 @@
 #
 #===============================================================================
 
-use 5.006000;
+use 5.008001;
 
 use strict;
 use warnings;

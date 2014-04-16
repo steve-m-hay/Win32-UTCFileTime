@@ -1,13 +1,13 @@
 #!perl
 #===============================================================================
 #
-# t/04_dir_mode.t
+# t/05_dir_mode.t
 #
 # DESCRIPTION
 #   Test script to check getting directory mode.
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2006 Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2006, 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -15,12 +15,11 @@
 #
 #===============================================================================
 
-use 5.006000;
+use 5.008001;
 
 use strict;
 use warnings;
 
-use Config qw(%Config);
 use Test::More tests => 7;
 
 #===============================================================================
@@ -37,7 +36,6 @@ BEGIN {
 
 MAIN: {
     my $dir = 'test';
-    my $bcc = $Config{cc} =~ /bcc32/io;
 
     my(@cstats, @rstats, @astats);
 
@@ -49,11 +47,8 @@ MAIN: {
     @astats = Win32::UTCFileTime::alt_stat($dir);
     is($rstats[2], $cstats[2],
        "stat() works for executable directory");
-    SKIP: {
-        skip 'Borland\'s stat(2) sets directory mode differently', 1 if $bcc;
-        is($astats[2], $cstats[2],
-           "alt_stat() works for executable directory");
-    }
+    is($astats[2], $cstats[2],
+       "alt_stat() works for executable directory");
 
     @cstats = CORE::lstat $dir;
     @rstats = Win32::UTCFileTime::lstat $dir;
@@ -66,11 +61,8 @@ MAIN: {
     @astats = Win32::UTCFileTime::alt_stat($dir);
     is($rstats[2], $cstats[2],
        "stat() works for read-only directory");
-    SKIP: {
-        skip 'Borland\'s stat(2) sets directory mode differently', 1 if $bcc;
-        is($astats[2], $cstats[2],
-           "alt_stat() works for read-only directory");
-    }
+    is($astats[2], $cstats[2],
+       "alt_stat() works for read-only directory");
 
     @cstats = CORE::lstat $dir;
     @rstats = Win32::UTCFileTime::lstat $dir;

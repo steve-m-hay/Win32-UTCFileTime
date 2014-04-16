@@ -1,9 +1,72 @@
 ________________________________________________________________________________
 
-                        Win32::UTCFileTime, Version 1.56
+                        Win32::UTCFileTime, Version 1.57
 ________________________________________________________________________________
 
 Revision history for Perl extension Win32::UTCFileTime.
+_________________
+
+v1.57 TODO
+
+    - Documented a new problem with the _utime() function in Visual Studio 2013
+      (VC12)'s C RTL DLL, which this module's replacement utime() function also
+      fixes.
+
+    - Incorporated an improvement to the stat(), lstat() and alt_stat()
+      functions that was introduced in Perl 5.8.9: These functions now work
+      correctly on directories specified with trailing slashses or backslashes,
+      even when using an older version of Perl.
+
+    - Incorporated perl's special handling of the file mode field returned by
+      stat() when compiled with Borland C++ into alt_stat() so that the field is
+      no longer set differently to perl for that compiler.
+
+    - Changed the Microsoft C library function call _get_osfhandle() to Perl's
+      exported function win32_get_osfhandle() so that it should not fail due to
+      the file descriptor passed to it being unrecognized.  This could
+      previously happen if this module was built by a compiler that used a
+      different C RTL DLL to that used by the compiler used to build perl.  This
+      restores support for such configurations, which was added in version 1.33,
+      but was broken if Visual Studio 2005 (VC8) or later was used to build this
+      module because the failing _get_osfhandle() call would actually crash the
+      program due to the new default invalid parameter handler.
+
+      It appears that using different compilers (and hence potentially different
+      C RTL DLLs) is safe now that the potential problem in doing so has been
+      removed, so the rudimentary checks on the compiler versions in Makefile.PL
+      have been removed too.  Note, however, that there is still a compatibility
+      problem when building this module with Visual Studio .NET 2002/2003 (VC7)
+      or earlier if your perl was built with Visual Studio 2005 (VC8) or later:
+      see [perl #121448].  However, that is quite an unlikely scenario, so it is
+      not worth checking for in Makefile.PL.
+
+    - Changed all PerlLIO_*() function calls to the corresponding lowio
+      functions: they should be redefined as necessary by perl's header files
+      anyway, which is indeed the case in perl-5.8.1 and above, at least -- see
+      the exchanges between myself and Jan Dubois on the "perl5-porters" mailing
+      list, 04-05 Mar 2010, for more details on this.
+
+    - Uploaded source code to GitHub and included repository URLS in meta data.
+
+    - Included META.json file in addition to META.yml.
+
+    - Simplified Makefile.PL commands for making a new distribution archive.
+
+    - Bumped minimum required ExtUtils::MakeMaker version to 6.66 to allow
+      building with 64-bit perl (otherwise the build fails with errors about
+      fakethr.h and perlsfio.h).
+
+    - Reverted to plain old ExtUtils::MakeMaker for building, now that that's
+      more fully maintained again.  Module::Install has virtually died a death,
+      and Module::Build is no better either.  Require a fairly recent version
+      (6.64) to ensure that all parameters used are supported, to save jumping
+      through hoops to support earlier versions.  (This should not be a problem
+      since ExtUtils::MakeMaker 6.64 is easily installed into Perl 5.8.1 and
+      above, that being the whole point of the new choice of minimum supported
+      Perl version.)
+
+    - Bumped minimum required Perl version from 5.6.0 to 5.8.1.  This is in line
+      with the minimum requirement of the "Perl Toolchain".
 _________________
 
 v1.56 08 Jul 2013
@@ -45,14 +108,14 @@ _________________
 v1.51 11 Oct 2009
 
     - Declare all core module dependencies in the Makefile.PL as well as the
-      existing CPAN module dependencies. (Cf. [cpan #50107].)
+      existing CPAN module dependencies.  (Cf. [cpan #50107].)
 _________________
 
 v1.50 25 Aug 2008
 
-    - Silenced a warning from Visual C++ 8.x onwards, which now defines time_t
-      as a 64-bit integer by default. A better solution to take advantage of the
-      larger time_t size may be forthcoming.
+    - Silenced a warning from Visual Studio 2005 (VC8) onwards, which now
+      defines time_t as a 64-bit integer by default.  A better solution to take
+      advantage of the larger time_t size may be forthcoming.
 
     - Updated Module::Install components from version 0.77 of that distribution.
 
@@ -65,9 +128,9 @@ v1.49 09 Jul 2008
 
     - Changed dwDesiredAccess and dwShareMode flags in the CreateFile() calls in
       stat() and alt_stat() from GENERIC_READ and FILE_SHARE_READ to 0 and 0 as
-      per the CreateFile() call in perl's own win32_stat(). This allows those
+      per the CreateFile() call in Perl's own win32_stat().  This allows those
       functions to operate on a file that is opened by another process that is
-      denying access to other processes trying to read the file. (Fixes
+      denying access to other processes trying to read the file.  (Fixes
       [cpan #37535].)
 _________________
 
@@ -100,8 +163,9 @@ v1.46 10 Jul 2007
     - Updated Module::Install::PRIVATE to version 1.05 for Makefile.PL
       improvements:
 
-      * Fixed the compiler version checking on Win32 for Visual C++ 8.x, which
-        now uses four numbers separated by dots for its compiler version.
+      * Fixed the compiler version checking on Win32 for Visual Studio 2005
+        (VC8), which now uses four numbers separated by dots for its compiler
+        version.
         
     - Updated Module::Install components from version 0.65 of that distribution.
 
@@ -135,7 +199,7 @@ v1.45 14 Feb 2006
       * Skipped some directory mode tests because Borland's stat(2) sets the
         mode differently to Microsoft's stat(2), emulated by alt_stat().
 
-      This module should now build (and test) cleanly with Perls built using
+      This module should now build (and test) cleanly with perls built using
       Borland C++ and dmake.
 
     - Changed various "use MODULE;" lines to be explicit about what is being
@@ -172,8 +236,9 @@ v1.44 02 Sep 2005
       improvements:
 
       * Relaxed the compiler version checking so that only the major version
-        numbers have to match (and also the minor version numbers for VC++ 7 and
-        later, which use CRT DLLs named msvcr70.dll, msvcr71.dll, etc)
+        numbers have to match (and also the minor version numbers for Visual
+        Studio .NET 2002/2003 (VC7) and later, which use C RTL DLLs named
+        msvcr70.dll, msvcr71.dll, etc)
         
         (Thanks to Sisyphus <sisyphus1@optusnet.com.au> for drawing attention to
         this problem via the PAR mailing list (par@perl.org));
@@ -215,9 +280,9 @@ v1.42 03 Mar 2005
       improvements:
 
       * Added code to try to check that on Win32 the same compiler is being used
-        to build this module as was used to build Perl itself to avoid problems
+        to build this module as was used to build perl itself to avoid problems
         with binaries built by different compiler versions loading different C
-        run-time DLLs.
+        RTL DLLs.
 
     - Added a recommendation for Test::Pod to Makefile.PL to test the POD when
       building these modules.  Included ExtUtils::AutoInstall to facilitate
@@ -295,20 +360,20 @@ v1.33 08 Aug 2004
       always reliably set (see below).
 
       This module now appears to function correctly when built using the free
-      Visual C++ Toolkit 2003 compiler in conjunction with a Perl (e.g.
+      Visual C++ Toolkit 2003 compiler in conjunction with a perl (e.g.
       ActivePerl Build 810) that was built using Visual C++ 6.0.  (Passing file
-      descriptors, errno and other CRT resources between the msvcr71.dll and
-      msvcrt.dll C run-time libraries used by those compilers respectively does
-      not work.)
+      descriptors, errno and other such resources between the different C RTL
+      DLLs used by those compilers (msvcr71.dll and msvcrt.dll respectively)
+      does not work.)
 
-      Using such mismatched C run-times, however, has to be seen as undesirable
+      Using such mismatched C RTL DLLs, however, has to be seen as undesirable
       and may not always work.
 
       Added a note to the INSTALL file that if possible the same compiler should
-      be used to build this module as was used to build Perl itself.
+      be used to build this module as was used to build perl itself.
 
       Thanks to Robert Rothenberg <rrwo@cpan.org> for drawing attention to this
-      problem via CPAN Testers (http://testers.cpan.org/).
+      problem via CPAN Testers Reports (http://www.cpantesters.org/).
 _________________
 
 v1.32 01 Aug 2004
@@ -319,10 +384,10 @@ v1.32 01 Aug 2004
     - Updated Module::Install components from version 0.35 of that distribution
       and changed Makefile.PL to use abstract_from() now that it is fixed.
 
-    - Changed INSTALL document and Makefile.PL to remove requirement for
-      Microsoft Visual C++, and mention dmake.
+    - Changed INSTALL document and Makefile.PL to remove requirement for Visual
+      C++, and mention dmake.
 
-    - This module should now build cleanly with Perls built using MinGW / dmake.
+    - This module should now build cleanly with perls built using MinGW / dmake.
 
     - Changed various standard C library function calls to their Perl
       replacement functions.
@@ -397,9 +462,9 @@ v1.20 24 Sep 2003
       tried by the replacement stat() and lstat() functions if the built-in
       functions that they call first fail.
 
-    - Changed the replacement utime()s use of Perl's trick for making it work on
-      directories too.  The trick only works under Windows NT platforms, so it
-      is more appropriate to try a more natural approach first and only fall
+    - Changed the replacement utime()'s use of Perl's trick for making it work
+      on directories too.  The trick only works under Windows NT platforms, so
+      it is more appropriate to try a more natural approach first and only fall
       back on the trick if that fails.  This is the approach that Perl uses too.
 
     - Improved the replacement stat() and lstat() functions by having them fall

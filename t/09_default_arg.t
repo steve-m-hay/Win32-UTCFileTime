@@ -1,13 +1,13 @@
 #!perl
 #===============================================================================
 #
-# t/08_default_arg.t
+# t/09_default_arg.t
 #
 # DESCRIPTION
 #   Test script to check default arguments.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2006 Steve Hay.  All rights reserved.
+#   Copyright (C) 2004-2006, 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -15,7 +15,7 @@
 #
 #===============================================================================
 
-use 5.006000;
+use 5.008001;
 
 use strict;
 use warnings;
