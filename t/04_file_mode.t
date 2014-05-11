@@ -37,10 +37,10 @@ BEGIN {
 MAIN: {
     my @files = map { "test.$_" } qw(txt exe bat com cmd);
 
-    my(@cstats, @rstats, @astats);
+    my($fh, @cstats, @rstats, @astats);
 
     foreach my $file (@files) {
-        open my $fh, ">$file" or die "Can't create file '$file': $!\n";
+        open $fh, ">$file" or die "Can't create file '$file': $!\n";
         close $fh;
     }
 

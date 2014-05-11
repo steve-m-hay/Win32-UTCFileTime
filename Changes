@@ -8,6 +8,9 @@ _________________
 
 v1.57 TODO
 
+    - Avoided possible test failures in t/02_file_times.t and t/12_errstr.t by
+      avoiding the problem of trying to open a file with a pending delete.
+
     - Documented a new problem with the _utime() function in Visual Studio 2013
       (VC12)'s C RTL DLL, which this module's replacement utime() function also
       fixes.

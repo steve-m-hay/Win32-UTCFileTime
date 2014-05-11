@@ -22,11 +22,19 @@ use warnings;
 
 use Test::More tests => 67;
 
+sub new_filename();
+
 #===============================================================================
 # INITIALIZATION
 #===============================================================================
 
 BEGIN {
+    my $i = 0;
+    sub new_filename() {
+        $i++;
+        return "test$i.txt";
+    }
+
     use_ok('Win32::UTCFileTime');
 }
 
@@ -35,11 +43,9 @@ BEGIN {
 #===============================================================================
 
 MAIN: {
-    my $file = 'test.txt';
+    my($file, $fh, $time, $errno, $lasterror, @stats, @lstats, @alt_stats);
 
-    my($fh, $time, $errno, $lasterror, @stats, @lstats, @alt_stats);
-
-    unlink $file or die "Can't delete file '$file': $!\n" if -e $file;
+    $file = new_filename();
     open $fh, ">$file" or die "Can't create file '$file': $!\n";
     close $fh;
     $time  = time;
@@ -52,8 +58,9 @@ MAIN: {
     cmp_ok(abs($time - $stats[9]), '<', 3,
            '... and gets mtime correctly: ' . scalar gmtime $stats[9]);
     # Do not check $stats[10] (creation time): often gets cached value.
+    unlink $file;
 
-    unlink $file or die "Can't delete file '$file': $!\n" if -e $file;
+    $file = new_filename();
     open $fh, ">$file" or die "Can't create file '$file': $!\n";
     close $fh;
     $time   = time;
@@ -66,8 +73,9 @@ MAIN: {
     cmp_ok(abs($time - $lstats[9]), '<', 3,
            '... and gets mtime correctly: ' . scalar gmtime $lstats[9]);
     # Do not check $lstats[10] (creation time): often gets cached value.
+    unlink $file;
 
-    unlink $file or die "Can't delete file '$file': $!\n" if -e $file;
+    $file = new_filename();
     open $fh, ">$file" or die "Can't create file '$file': $!\n";
     close $fh;
     $time   = time;
@@ -80,16 +88,18 @@ MAIN: {
     cmp_ok(abs($time - $alt_stats[9]), '<', 3,
            '... and gets mtime correctly: ' . scalar gmtime $alt_stats[9]);
     # Do not check $alt_stats[10] (creation time): often gets cached value.
+    unlink $file;
 
-    unlink $file or die "Can't delete file '$file': $!\n" if -e $file;
+    $file = new_filename();
     open $fh, ">$file" or die "Can't create file '$file': $!\n";
     close $fh;
+    my($age, $utime, $ret);
     $time = time;
     for my $i (-7 .. 7) {
-        my $age = $i * 5000000;
-        my $utime = $time + $age;
+        $age = $i * 5000000;
+        $utime = $time + $age;
 
-        my $ret = utime $utime, $utime, $file;
+        $ret = utime $utime, $utime, $file;
         ($errno, $lasterror) = ($!, $^E);
         ok($ret, 'utime() returns OK for time ' . scalar gmtime $utime) or
             diag("\$! = '$errno', \$^E = '$lasterror'");
@@ -115,7 +125,6 @@ MAIN: {
                '... and sets mtime correctly according to alt_stat()');
         # Do not check $alt_stats[10] (creation time): not set by utime().
     }
-
     unlink $file;
 }
 
