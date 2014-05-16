@@ -6,7 +6,7 @@ ________________________________________________________________________________
 Revision history for Perl extension Win32::UTCFileTime.
 _________________
 
-v1.57 TODO
+v1.57 16 May 2014
 
     - Avoided possible test failures in t/02_file_times.t and t/12_errstr.t by
       avoiding the problem of trying to open a file with a pending delete.
