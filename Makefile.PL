@@ -54,11 +54,7 @@ MAIN: {
             },
 
             resources => {
-                repository => {
-                    type => 'git',
-                    url  => 'git://github.com/steve-m-hay/Win32-UTCFileTime.git',
-                    web  => 'https://github.com/steve-m-hay/Win32-UTCFileTime'
-                }
+                repository => 'https://github.com/steve-m-hay/Win32-UTCFileTime'
             }
         },
 
