@@ -52,7 +52,7 @@ BEGIN {
         alt_stat
     );
     
-    $VERSION = '1.58';
+    $VERSION = '1.59';
 
     XSLoader::load(__PACKAGE__, $VERSION);
 }
@@ -1585,11 +1585,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 1.58
+Version 1.59
 
 =head1 DATE
 
-30 May 2014
+TODO
 
 =head1 HISTORY
 
