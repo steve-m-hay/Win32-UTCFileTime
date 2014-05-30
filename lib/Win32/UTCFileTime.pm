@@ -106,12 +106,12 @@ sub import {
     my @args = grep {
         my $passthrough;
         if ($_ eq ':globally') {
-	    no warnings 'redefine';
+            no warnings 'redefine';
             *CORE::GLOBAL::stat  = \&Win32::UTCFileTime::stat;
             *CORE::GLOBAL::lstat = \&Win32::UTCFileTime::lstat;
             *CORE::GLOBAL::utime = \&Win32::UTCFileTime::utime;
-	}
-	else {
+        }
+        else {
             $passthrough = 1;
         }
         $passthrough;
