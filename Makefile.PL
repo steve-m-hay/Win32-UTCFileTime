@@ -86,18 +86,16 @@ MAIN: {
         },
 
         TEST_REQUIRES => {
-            'Config'                => '0',
-            'File::Spec::Functions' => '0',
-            'Test::More'            => '0',
-            'perl'                  => '5.008001',
-            'strict'                => '0',
-            'warnings'              => '0'
+            'Config'     => '0',
+            'Test::More' => '0'
         },
 
         PREREQ_PM => {
+            'Carp'     => '0',
             'Exporter' => '0',
             'XSLoader' => '0',
-            'perl'     => '5.008001'
+            'strict'   => '0',
+            'warnings' => '0'
         },
 
         clean => {
