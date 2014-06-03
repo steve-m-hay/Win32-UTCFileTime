@@ -39,7 +39,7 @@ MAIN: {
 
     for my $i (1 .. 2048) {
         $file = "test$i.txt";
-        open $fh, ">$file" or die "Can't create file '$file': $!\n";
+        open $fh, '>', $file or die "Can't create file '$file': $!\n";
         close $fh;
         $time  = time;
 

@@ -39,7 +39,7 @@ MAIN: {
 
     my($fh, @cstats, @rstats, @astats);
 
-    open $fh, ">$file" or die "Can't create file '$file': $!\n";
+    open $fh, '>', $file or die "Can't create file '$file': $!\n";
     close $fh;
 
     @cstats = CORE::stat $file;

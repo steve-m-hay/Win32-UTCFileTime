@@ -40,7 +40,7 @@ MAIN: {
     my($fh, @cstats, @rstats, @astats);
 
     foreach my $file (@files) {
-        open $fh, ">$file" or die "Can't create file '$file': $!\n";
+        open $fh, '>', $file or die "Can't create file '$file': $!\n";
         close $fh;
     }
 

@@ -26,6 +26,8 @@ use Carp qw(croak);
 use Exporter qw();
 use XSLoader qw();
 
+## no critic (Subroutines::ProhibitSubroutinePrototypes)
+
 sub stat(;$);
 sub lstat(;$);
 sub alt_stat(;$);
@@ -87,7 +89,7 @@ sub AUTOLOAD {
 
     # Generate an in-line subroutine returning the required value.
     {
-        no strict 'refs';
+        no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
         *$AUTOLOAD = sub { return $value };
     }
 

@@ -39,7 +39,7 @@ MAIN: {
 
     my($fh, @stats1, @stats2, $ok);
 
-    open $fh, ">$file" or die "Can't create file '$file': $!\n";
+    open $fh, '>', $file or die "Can't create file '$file': $!\n";
     close $fh;
 
     @stats1 = Win32::UTCFileTime::stat $file;

@@ -22,6 +22,8 @@ use warnings;
 
 use Test::More tests => 9;
 
+## no critic (Subroutines::ProhibitSubroutinePrototypes)
+
 sub new_filename();
 
 #===============================================================================
@@ -48,7 +50,7 @@ MAIN: {
     {
         $file = new_filename();
 
-        open $fh, ">$file";
+        open $fh, '>', $file;
         close $fh;
 
         stat $file;
@@ -64,7 +66,7 @@ MAIN: {
     {
         $file = new_filename();
 
-        open $fh, ">$file";
+        open $fh, '>', $file;
         close $fh;
 
         lstat $file;
@@ -80,7 +82,7 @@ MAIN: {
     {
         $file = new_filename();
 
-        open $fh, ">$file";
+        open $fh, '>', $file;
         close $fh;
 
         Win32::UTCFileTime::alt_stat($file);
@@ -96,7 +98,7 @@ MAIN: {
     {
         $file = new_filename();
 
-        open $fh, ">$file";
+        open $fh, '>', $file;
         close $fh;
 
         utime undef, undef, $file;
