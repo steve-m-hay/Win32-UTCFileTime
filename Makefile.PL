@@ -61,6 +61,17 @@ MAIN: {
             },
 
             optional_features => {
+                critictest => {
+                    description => 'Perl::Critic testing',
+                    prereqs => {
+                        test => {
+                            requires => {
+                                'Test::Perl::Critic' => '0'
+                            }
+                        }
+                    }
+                },
+
                 podtest => {
                     description => 'POD testing',
                     prereqs => {
