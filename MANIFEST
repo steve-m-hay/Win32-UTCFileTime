@@ -36,3 +36,4 @@ t/11_utime_fh_leak.t                     See if utime() leaks filehandles
 t/12_errstr.t                            See if $ErrStr variable works
 t/13_critic.t                            See if coding style is OK
 t/14_pod.t                               See if POD is OK
+t/15_pod_coverage.t                      See if POD coveage is OK
