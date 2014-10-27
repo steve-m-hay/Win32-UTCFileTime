@@ -1,10 +1,10 @@
 #!perl
 #===============================================================================
 #
-# t/15_pod_coverage.t
+# t/13_changes.t
 #
 # DESCRIPTION
-#   Test script to check POD coverage.
+#   Test script to check CPAN::Changes conformance.
 #
 # COPYRIGHT
 #   Copyright (C) 2014 Steve Hay.  All rights reserved.
@@ -30,19 +30,16 @@ MAIN: {
     plan skip_all => 'Author testing only' unless $ENV{AUTHOR_TESTING};
 
     my $ok = eval {
-        require Test::Pod::Coverage;
-        Test::Pod::Coverage->import();
+        require Test::CPAN::Changes;
+        Test::CPAN::Changes->import();
         1;
     };
 
     if (not $ok) {
-        plan skip_all => 'Test::Pod::Coverage required to test POD coverage';
-    }
-    elsif ($Test::Pod::Coverage::VERSION < 0.08) {
-        plan skip_all => 'Test::Pod::Coverage 0.08 or higher required to test POD coverage';
+        plan skip_all => 'Test::CPAN::Changes required to test Changes';
     }
     else {
-        all_pod_coverage_ok();
+        changes_ok();
     }
 }
 

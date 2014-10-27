@@ -1,13 +1,13 @@
 #!perl
 #===============================================================================
 #
-# t/14_pod.t
+# t/14_critic.t
 #
 # DESCRIPTION
-#   Test script to check POD.
+#   Test script to check Perl::Critic conformance.
 #
 # COPYRIGHT
-#   Copyright (C) 2004-2005, 2008, 2014 Steve Hay.  All rights reserved.
+#   Copyright (C) 2014 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   You may distribute under the terms of either the GNU General Public License
@@ -30,19 +30,16 @@ MAIN: {
     plan skip_all => 'Author testing only' unless $ENV{AUTHOR_TESTING};
 
     my $ok = eval {
-        require Test::Pod;
-        Test::Pod->import();
+        require Test::Perl::Critic;
+        Test::Perl::Critic->import(-profile => '');
         1;
     };
 
     if (not $ok) {
-        plan skip_all => 'Test::Pod required to test POD';
-    }
-    elsif ($Test::Pod::VERSION < 1.00) {
-        plan skip_all => 'Test::Pod 1.00 or higher required to test POD';
+        plan skip_all => 'Test::Perl::Critic required to test with Perl::Critic';
     }
     else {
-        all_pod_files_ok();
+        all_critic_ok('.');
     }
 }
 

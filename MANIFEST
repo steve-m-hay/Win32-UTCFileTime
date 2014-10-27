@@ -34,6 +34,7 @@ t/09_default_arg.t                       See if default arguments work
 t/10_stat_fh_leak.t                      See if stat(), lstat() or alt_stat() leak filehandles
 t/11_utime_fh_leak.t                     See if utime() leaks filehandles
 t/12_errstr.t                            See if $ErrStr variable works
-t/13_critic.t                            See if coding style is OK
-t/14_pod.t                               See if POD is OK
-t/15_pod_coverage.t                      See if POD coveage is OK
+t/13_changes.t                           See if Changes file format is OK
+t/14_critic.t                            See if coding style is OK
+t/15_pod.t                               See if POD is OK
+t/16_pod_coverage.t                      See if POD coveage is OK

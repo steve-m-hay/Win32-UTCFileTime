@@ -2,6 +2,8 @@ Revision history for Perl distribution Win32-UTCFileTime
 
 1.59 Development
 
+    - Added optional Changes testing (skipped unless AUTHOR_TESTING).
+
     - Made Perl Critic, Pod and Pod Coverage tests skip unless AUTHOR_TESTING.
 
     - Added optional POD coverage testing.
