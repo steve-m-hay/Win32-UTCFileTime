@@ -13,7 +13,7 @@ PREREQUISITES
         Ideally you should try to use the same compiler as was used to build
         your perl itself, although this is not essential.  (However, there is a
         known compatibility problem when building this module with VC7 or
-        earlier if your perl was built with VC8 or later: see [perl #121448].)
+        earlier if your perl was built with VC8 or later: see Perl RT#121448.)
 
     Perl
 

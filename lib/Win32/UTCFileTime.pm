@@ -1535,7 +1535,7 @@ to it in the L<"BACKGROUND REFERENCE"> section of this manpage.
 
 Credit is also due to Slaven Rezic for finding Jonathan's work on the Code
 Project website (F<http://www.codeproject.com/>) in response to my bug report
-([perl #18513] on the Perl Bugs website, F<http://rt.perl.org/>).
+(Perl RT#18513).
 
 The custom C<import()> method is based on that in the standard library module
 File::Glob (version 1.23), written by Nathan Torkington and others.
