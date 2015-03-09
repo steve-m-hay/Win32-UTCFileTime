@@ -61,6 +61,17 @@ MAIN: {
             },
 
             optional_features => {
+                changestest => {
+                    description => 'Changes testing',
+                    prereqs => {
+                        test => {
+                            requires => {
+                                'Test::CPAN::Changes' => '0'
+                            }
+                        }
+                    }
+                },
+
                 critictest => {
                     description => 'Perl::Critic testing',
                     prereqs => {
