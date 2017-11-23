@@ -798,13 +798,13 @@ available for Visual C++ 6.0.)
 
 An excellent overview of the problem with Microsoft's C<stat(2)> was written by
 Jonathan M Gilligan and posted on the Code Project website
-(F<http://www.codeproject.com/>).  He has kindly granted permission to use his
+(L<http://www.codeproject.com/>).  He has kindly granted permission to use his
 article here to describe the problem more fully.  A slightly edited version of
 it now follows; the original article can be found at the URL
-F<http://www.codeproject.com/datetime/dstbugs.asp>.
+L<http://www.codeproject.com/datetime/dstbugs.asp>.
 
 (The article was accompanied by a C library, adapted from code written for CVSNT
-(F<http://www.cvsnt.org/>) by Jonathan and Tony M Hoyle, which implemented the
+(L<http://www.cvsnt.org/>) by Jonathan and Tony M Hoyle, which implemented the
 solution outlined at the end of his article.  The solution provided by this
 module is partly based on that library and the original CVSNT code itself
 (version 2.0.4), which both authors kindly granted permission to use under the
@@ -935,7 +935,7 @@ such as "leap seconds."  TAI measures raw atomic time.  UTC measures time
 coordinated to the motion of the earth (i.e., so we don't end up having midnight
 while the sun is shining or January in midsummer).  Details of what UTC really
 means, together with a more detailed history of timekeeping, can be found at
-F<http://ecco.bsee.swin.edu.au/chronos/GMT-explained.html>.
+L<http://ecco.bsee.swin.edu.au/chronos/GMT-explained.html>.
 
 =head2 UTC, time zones, and Windows file times
 
@@ -1503,22 +1503,22 @@ even become redundant.
 Patches, bug reports, suggestions or any other feedback is welcome.
 
 Patches can be sent as GitHub pull requests at
-F<https://github.com/steve-m-hay/Win32-UTCFileTime/pulls>.
+L<https://github.com/steve-m-hay/Win32-UTCFileTime/pulls>.
 
 Bug reports and suggestions can be made on the CPAN Request Tracker at
-F<https://rt.cpan.org/Public/Bug/Report.html?Queue=Win32-UTCFileTime>.
+L<https://rt.cpan.org/Public/Bug/Report.html?Queue=Win32-UTCFileTime>.
 
 Currently active requests on the CPAN Request Tracker can be viewed at
-F<https://rt.cpan.org/Public/Dist/Display.html?Status=Active;Queue=Win32-UTCFileTime>.
+L<https://rt.cpan.org/Public/Dist/Display.html?Status=Active;Queue=Win32-UTCFileTime>.
 
 Please test this distribution.  See CPAN Testers Reports at
-F<http://www.cpantesters.org/> for details of how to get involved.
+L<http://www.cpantesters.org/> for details of how to get involved.
 
 Previous test results on CPAN Testers can be viewed at
-F<http://www.cpantesters.org/distro/W/Win32-UTCFileTime.html>.
+L<http://www.cpantesters.org/distro/W/Win32-UTCFileTime.html>.
 
 Please rate this distribution on CPAN Ratings at
-F<http://cpanratings.perl.org/rate/?distribution=Win32-UTCFileTime>.
+L<http://cpanratings.perl.org/rate/?distribution=Win32-UTCFileTime>.
 
 =head1 SEE ALSO
 
@@ -1539,7 +1539,7 @@ granting permission to use his article describing the problem and his solution
 to it in the L<"BACKGROUND REFERENCE"> section of this manpage.
 
 Credit is also due to Slaven Rezic for finding Jonathan's work on the Code
-Project website (F<http://www.codeproject.com/>) in response to my bug report
+Project website (L<http://www.codeproject.com/>) in response to my bug report
 (Perl RT#18513).
 
 The custom C<import()> method is based on that in the standard library module
@@ -1560,16 +1560,16 @@ the C<win32_str_os_error()> function in Perl (version 5.19.10).
 The latest version of this module is available from CPAN (see
 L<perlmodlib/"CPAN"> for details) at
 
-F<https://metacpan.org/release/Win32-UTCFileTime> or
+L<https://metacpan.org/release/Win32-UTCFileTime> or
 
-F<http://search.cpan.org/dist/Win32-UTCFileTime/> or
+L<http://search.cpan.org/dist/Win32-UTCFileTime/> or
 
-F<http://www.cpan.org/authors/id/S/SH/SHAY/> or
+L<http://www.cpan.org/authors/id/S/SH/SHAY/> or
 
-F<http://www.cpan.org/modules/by-module/Win32/>.
+L<http://www.cpan.org/modules/by-module/Win32/>.
 
 The latest source code is available from GitHub at
-F<https://github.com/steve-m-hay/Win32-UTCFileTime>.
+L<https://github.com/steve-m-hay/Win32-UTCFileTime>.
 
 =head1 INSTALLATION
 
