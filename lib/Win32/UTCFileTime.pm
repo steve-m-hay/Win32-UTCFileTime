@@ -1531,12 +1531,14 @@ L<Win32::FileTime>.
 
 =head1 ACKNOWLEDGEMENTS
 
-Many thanks to Jonathan M Gilligan E<lt>jonathan.gilligan@vanderbilt.eduE<gt>
-and Tony M Hoyle E<lt>tmh@nodomain.orgE<gt> who wrote much of the C code that
-this module is based on and granted permission to use it under the terms of the
-Perl Artistic License as well as the GNU GPL.  Extra thanks to Jonathan for also
-granting permission to use his article describing the problem and his solution
-to it in the L<"BACKGROUND REFERENCE"> section of this manpage.
+Many thanks to Jonathan M Gilligan
+E<lt>L<jonathan.gilligan@vanderbilt.edu|mailto:jonathan.gilligan@vanderbilt.edu>E<gt>
+and Tony M Hoyle E<lt>L<tmh@nodomain.org|mailto:tmh@nodomain.org>E<gt> who wrote
+much of the C code that this module is based on and granted permission to use it
+under the terms of the Perl Artistic License as well as the GNU GPL.  Extra
+thanks to Jonathan for also granting permission to use his article describing
+the problem and his solution to it in the L<"BACKGROUND REFERENCE"> section of
+this manpage.
 
 Credit is also due to Slaven Rezic for finding Jonathan's work on the Code
 Project website (L<http://www.codeproject.com/>) in response to my bug report
@@ -1577,7 +1579,7 @@ See the F<INSTALL> file.
 
 =head1 AUTHOR
 
-Steve Hay E<lt>F<shay@cpan.org>E<gt>.
+Steve Hay E<lt>L<shay@cpan.org|mailto:shay@cpan.org>E<gt>.
 
 =head1 COPYRIGHT
 
