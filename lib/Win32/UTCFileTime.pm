@@ -1581,7 +1581,7 @@ Steve Hay E<lt>L<shay@cpan.org|mailto:shay@cpan.org>E<gt>.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2003-2008, 2012-2014 Steve Hay.  All rights reserved.
+Copyright (C) 2003-2008, 2012-2015 Steve Hay.  All rights reserved.
 
 Portions Copyright (C) 2001 Jonathan M Gilligan.  Used with permission.
 
