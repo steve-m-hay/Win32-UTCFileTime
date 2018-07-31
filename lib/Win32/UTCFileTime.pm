@@ -1599,7 +1599,7 @@ Version 1.59
 
 =head1 DATE
 
-TODO
+31 Jul 2018
 
 =head1 HISTORY
 
