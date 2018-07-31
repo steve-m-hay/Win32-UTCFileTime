@@ -1564,8 +1564,6 @@ L<perlmodlib/"CPAN"> for details) at
 
 L<https://metacpan.org/release/Win32-UTCFileTime> or
 
-L<http://search.cpan.org/dist/Win32-UTCFileTime/> or
-
 L<http://www.cpan.org/authors/id/S/SH/SHAY/> or
 
 L<http://www.cpan.org/modules/by-module/Win32/>.
