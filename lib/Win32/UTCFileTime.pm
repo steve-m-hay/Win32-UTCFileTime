@@ -7,7 +7,7 @@
 #   Win32.
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2008, 2012-2014 Steve Hay.  All rights reserved.
+#   Copyright (C) 2003-2008, 2012-2014, 2020 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   This module is free software; you can redistribute it and/or modify it under
@@ -330,7 +330,9 @@ This module provides replacements for Perl's built-in C<stat()> and C<utime()>
 functions that respectively get and set "correct" UTC file times instead of the
 erroneous values read and written by Microsoft's implementation of C<stat(2)>
 and C<utime(2)>, which Perl's built-in functions inherit on Win32 when built
-with the Microsoft C library.
+with the Microsoft C library in Visual Studio 2013 (VC12) or earlier.  The bugs
+in the Microsoft C library have since been fixed, so there is no need for this
+module if you build perl with Visual Studio 2015 (VC14.0) or later.
 
 For completeness, a replacement for Perl's built-in C<lstat()> function is also
 provided, although in practice that is unimplemented on Win32 and just calls
@@ -339,12 +341,13 @@ the override provided by this module, so you must use the C<lstat()> override
 provided by this module if you want "correct" UTC file times from C<lstat()>.)
 
 The problem with Microsoft's C<stat(2)> and C<utime(2)>, and hence Perl's
-built-in C<stat()>, C<lstat()> and C<utime()> when built with the Microsoft C
-library, is basically this: file times reported by C<stat(2)> or stored by
-C<utime(2)> may change by an hour as we move into or out of daylight saving time
-(DST) if the computer is set to "Automatically adjust clock for daylight saving
-changes" (which is the default setting) and the file is stored on an NTFS volume
-(which is the preferred filesystem used by Windows NT/2000/XP/2003).
+built-in C<stat()>, C<lstat()> and C<utime()> when built with the faulty
+Microsoft C library, is basically this: file times reported by C<stat(2)> or
+stored by C<utime(2)> may change by an hour as we move into or out of daylight
+saving time (DST) if the computer is set to "Automatically adjust clock for
+daylight saving changes" (which is the default setting) and the file is stored
+on an NTFS volume (which is the preferred filesystem used by Windows NT
+onwards).
 
 It seems particularly ironic that the problem should afflict the NTFS filesystem
 because the C<time_t> values used by both C<stat(2)> and C<utime(2)> express
@@ -378,8 +381,9 @@ one of the fields in its C<struct tm> argument.
 
 Additionally, if you build perl with Visual Studio 2013 (VC12) then perl's
 C<utime()> function will suffer from a new bug introduced into the C RTL DLL's
-C<utime(2)> function, which Microsoft do not intend to fix until a future
-version of Visual Studio.
+C<utime(2)> function.
+
+All the bugs are fixed in Visual Studio 2015 (VC14.0) onwards.
 
 See L<"BACKGROUND REFERENCE"> for more details.
 
@@ -1438,10 +1442,35 @@ time, which was not the case in previous versions of Visual Studio since
 C<stat(2)> used to have the same DST bug as C<utime(2)>, thus at least yielding
 consistent results.
 
-Details of this problem can be found here: L<https://connect.microsoft.com/VisualStudio/feedback/details/811534/utime-sometimes-fails-to-set-the-correct-file-times-in-visual-c-2013>.
+Details of this problem could previously be found here: L<https://connect.microsoft.com/VisualStudio/feedback/details/811534/utime-sometimes-fails-to-set-the-correct-file-times-in-visual-c-2013>.  Unfortunately, Microsoft Connect has now
+been retired.  Visual C++ bugs should have been migrated over to the Developer
+Community site for C++ (see: L<https://developercommunity.visualstudio.com/spaces/62/index.html>), but this particular bug doesn't seem to have been migrated,
+perhaps because it is now resolved (see L<"A Happy Ending"> below).
 
 Fortunately, the replacement C<utime()> function provided by this module fixes
 this problem too.
+
+=head2 A Happy Ending
+
+With the release of Visual Studio 2015 (VC14.0), Microsoft finally resolved all
+the problems with C<stat(2)> and C<utime(2)>, rendering this module mostly
+redundant (except possibly for the C<alt_stat()> function).  The following words
+are taken from "Microsoft C/C++ change history 2003 - 2015" (see: L<https://docs.microsoft.com/en-us/cpp/porting/visual-cpp-change-history-2003-2015?view=msvc-160#VC_2015>):
+
+    Visual Studio 2015 Conformance Changes
+    C Runtime Library (CRT)
+
+    In previous versions, the _stat, fstat, and _utime functions handle daylight
+    savings time incorrectly.  Prior to Visual Studio 2013, all of these
+    functions incorrectly adjusted standard time times as if they were in
+    daylight time.
+
+    In Visual Studio 2013, the problem was fixed in the _stat family of
+    functions, but the similar problems in the fstat and _utime families of
+    functions were not fixed.  This partial fix led to problems due to the
+    inconsistency between the functions.  The fstat and _utime families of
+    functions have now been fixed, so all of these functions now handle daylight
+    savings time correctly and consistently.
 
 =head1 EXPORTS
 
@@ -1495,6 +1524,9 @@ by this module would not be appropriate.
 
 In either case, this module would either need updating appropriately, or may
 even become redundant.
+
+In fact, as noted above (see L<"A Happy Ending">), this module has become more
+or less redundant with the release of Visual Studio 2015 (VC14.0).
 
 =back
 
@@ -1581,7 +1613,7 @@ Steve Hay E<lt>L<shay@cpan.org|mailto:shay@cpan.org>E<gt>.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2003-2008, 2012-2015 Steve Hay.  All rights reserved.
+Copyright (C) 2003-2008, 2012-2015, 2020 Steve Hay.  All rights reserved.
 
 Portions Copyright (C) 2001 Jonathan M Gilligan.  Used with permission.
 
