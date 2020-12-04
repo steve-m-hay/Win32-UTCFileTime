@@ -24,6 +24,8 @@ PREREQUISITES
         Perl version 5.8.1 or later.
         The latest version of Perl is available from https://www.perl.com/.
 
+        This module is wholly redundant if you are running Perl 5.33.5 or later.
+
     Perl Modules
 
         There are no non-standard Perl modules required by this module.

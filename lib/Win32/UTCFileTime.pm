@@ -326,13 +326,24 @@ Win32::UTCFileTime - Get/set UTC file times with stat/utime on Win32
 
 =head1 DESCRIPTION
 
+B<NOTE: In Perl 5.33.5, the built-in C<stat()> and C<utime()> functions were
+rewritten (and a proper implementation of C<lstat()> was added) in such a way
+that the UTC file time handling is now correct (including the case of C<utime()>
+being used on directories) regardless of which compiler perl is built with, thus
+rendering this module wholly redundant for Perl 5.33.5 or later.  The remainder
+of this man page is written from the perspective of earlier versions of Perl.>
+
 This module provides replacements for Perl's built-in C<stat()> and C<utime()>
 functions that respectively get and set "correct" UTC file times instead of the
 erroneous values read and written by Microsoft's implementation of C<stat(2)>
 and C<utime(2)>, which Perl's built-in functions inherit on Win32 when built
-with the Microsoft C library in Visual Studio 2013 (VC12) or earlier.  The bugs
-in the Microsoft C library have since been fixed, so there is no need for this
-module if you build perl with Visual Studio 2015 (VC14.0) or later.
+with the Microsoft C library in Visual Studio 2013 (VC12) or earlier.
+
+The bugs in the Microsoft C library have since been fixed, so there is mostly no
+need for this module if you build perl with Visual Studio 2015 (VC14.0) or
+later, except that the use of C<utime()> on directories is a Perl extension over
+the underlying Microsoft C library function and still has incorrect UTC file
+time handling even for perls built with VC14.0 or later.
 
 For completeness, a replacement for Perl's built-in C<lstat()> function is also
 provided, although in practice that is unimplemented on Win32 and just calls
@@ -383,7 +394,9 @@ Additionally, if you build perl with Visual Studio 2013 (VC12) then perl's
 C<utime()> function will suffer from a new bug introduced into the C RTL DLL's
 C<utime(2)> function.
 
-All the bugs are fixed in Visual Studio 2015 (VC14.0) onwards.
+All the bugs are fixed in Visual Studio 2015 (VC14.0) onwards, but note that the
+C RTL DLL's C<utime(2)> function isn't used for C<utime()> calls on directories,
+which unfortunately retain their buggy behaviour.
 
 See L<"BACKGROUND REFERENCE"> for more details.
 
@@ -1454,8 +1467,8 @@ this problem too.
 
 With the release of Visual Studio 2015 (VC14.0), Microsoft finally resolved all
 the problems with C<stat(2)> and C<utime(2)>, rendering this module mostly
-redundant (except possibly for the C<alt_stat()> function).  The following words
-are taken from "Microsoft C/C++ change history 2003 - 2015" (see: L<https://docs.microsoft.com/en-us/cpp/porting/visual-cpp-change-history-2003-2015?view=msvc-160#VC_2015>):
+redundant (but see below).  The following words are taken from "Microsoft C/C++
+change history 2003 - 2015" (see: L<https://docs.microsoft.com/en-us/cpp/porting/visual-cpp-change-history-2003-2015?view=msvc-160#VC_2015>):
 
     Visual Studio 2015 Conformance Changes
     C Runtime Library (CRT)
@@ -1471,6 +1484,20 @@ are taken from "Microsoft C/C++ change history 2003 - 2015" (see: L<https://docs
     inconsistency between the functions.  The fstat and _utime families of
     functions have now been fixed, so all of these functions now handle daylight
     savings time correctly and consistently.
+
+There is still one fly in the ointment: The Microsoft implementation of
+C<utime(2)> doesn't work on directories, and whilst Perl's built-in C<utime()>
+function works around that, it unfortunately does so in such a way that the UTC
+file time handling is still not correct even for perls built with VC14.0 or
+later.
+
+B<However, all this was finally put to bed with the resolution of CPAN RT#18513
+(see https://github.com/Perl/perl5/issues/6080) in Perl 5.33.5, in which Perl's
+built-in C<stat()> and C<utime()> functions were rewritten (and a proper
+implementation of C<lstat()> was added) in such a way that the UTC file time
+handling is now correct (including the case of C<utime()> being used on
+directories) regardless of which compiler perl is built with, thus rendering
+this module wholly redundant.>
 
 =head1 EXPORTS
 
@@ -1519,14 +1546,15 @@ C<GetFileTime()> is not used by it.)
 Likewise, if corrections such as those applied by this module were ever
 incorporated into the Perl core (so that Perl's built-in C<stat()>, C<lstat()>
 and C<utime()> functions get/set correct UTC values themselves, even when built
-on the faulty Microsoft C library functions) then again, the corrections applied
-by this module would not be appropriate.
+on the faulty Microsoft C library functions) then the corrections applied by
+this module would not be necessary.
 
 In either case, this module would either need updating appropriately, or may
 even become redundant.
 
-In fact, as noted above (see L<"A Happy Ending">), this module has become more
-or less redundant with the release of Visual Studio 2015 (VC14.0).
+B<In fact, as noted above (see L<"A Happy Ending">), this module became mostly
+redundant with the release of Visual Studio 2015 (VC14.0), and wholly redundant
+with the release of Perl 5.33.5.>
 
 =back
 
