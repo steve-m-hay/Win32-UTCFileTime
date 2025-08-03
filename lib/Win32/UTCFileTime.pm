@@ -1491,13 +1491,12 @@ function works around that, it unfortunately does so in such a way that the UTC
 file time handling is still not correct even for perls built with VC14.0 or
 later.
 
-B<However, all this was finally put to bed with the resolution of CPAN RT#18513
-(see https://github.com/Perl/perl5/issues/6080) in Perl 5.33.5, in which Perl's
-built-in C<stat()> and C<utime()> functions were rewritten (and a proper
-implementation of C<lstat()> was added) in such a way that the UTC file time
-handling is now correct (including the case of C<utime()> being used on
-directories) regardless of which compiler perl is built with, thus rendering
-this module wholly redundant.>
+B<However, all this was finally put to bed with the resolution of Perl GH#6080
+in Perl 5.33.5, in which Perl's built-in C<stat()> and C<utime()> functions were
+rewritten (and a proper implementation of C<lstat()> was added) in such a way
+that the UTC file time handling is now correct (including the case of C<utime()>
+being used on directories) regardless of which compiler perl is built with, thus
+rendering this module wholly redundant.>
 
 =head1 EXPORTS
 
@@ -1602,7 +1601,7 @@ this manpage.
 
 Credit is also due to Slaven Rezic for finding Jonathan's work on the Code
 Project website (L<https://www.codeproject.com/>) in response to my bug report
-(Perl RT#18513).
+(Perl GH#6080).
 
 The custom C<import()> method is based on that in the standard library module
 File::Glob (version 1.23), written by Nathan Torkington and others.
