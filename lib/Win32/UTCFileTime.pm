@@ -1576,9 +1576,6 @@ L<https://www.cpantesters.org/> for details of how to get involved.
 Previous test results on CPAN Testers can be viewed at
 L<https://www.cpantesters.org/distro/W/Win32-UTCFileTime.html>.
 
-Please rate this distribution on CPAN Ratings at
-L<https://cpanratings.perl.org/rate/?distribution=Win32-UTCFileTime>.
-
 =head1 SEE ALSO
 
 L<perlfunc/stat>,
